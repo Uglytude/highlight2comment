@@ -12,13 +12,13 @@
 2. Chrome 打开 `chrome://extensions`,右上角开「开发者模式」。
 3. 点「加载已解压的扩展程序」,选本仓库的 `src/` 文件夹。
 4. 在任意网页选中文字 → 点冒出来的小按钮 → 写评论 → 保存。
-5. 点扩展图标:可「下载全部」为一个 `.md`,或「连接 Obsidian 文件夹」让笔记自动追加进库。
+5. 点扩展图标:可「下载全部」为一个 `.md`,或「连接 Obsidian 文件夹」让笔记自动追加进库里的 `highlight2comment-log.md`。
 
 ## 隐私
 不注册、不联网、不上传。所有数据存在浏览器本地和你选定的 Obsidian 文件夹里。
 
 ## 状态
-V1 开发中。施工纪律见 [`AGENTS.md`](./AGENTS.md),需求与验收见 [`BUILD_SPEC.md`](./BUILD_SPEC.md)。
+V1 已实现。施工纪律见 [`AGENTS.md`](./AGENTS.md),需求与验收见 [`BUILD_SPEC.md`](./BUILD_SPEC.md)。
 
 ## 许可
 MIT(待确认)。

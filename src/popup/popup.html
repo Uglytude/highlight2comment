@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>highlight2comment</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup-header">
+        <h1>highlight2comment</h1>
+        <div class="count"><span id="note-count">0</span> 条</div>
+      </header>
+
+      <section class="state" aria-live="polite">
+        <div>
+          <span class="label">Obsidian</span>
+          <span id="obsidian-state">未连接</span>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button id="connect-button" type="button">连接 Obsidian 文件夹</button>
+        <button id="download-button" type="button">下载全部</button>
+      </div>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>

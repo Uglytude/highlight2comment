@@ -8,6 +8,8 @@
 
   let buttonRoot = null;
   let editorRoot = null;
+  let outsideEditorTimer = null;
+  let isOutsideEditorListenerAttached = false;
   let selectionTimer = null;
   let selectedText = "";
   let selectedRect = null;
@@ -114,6 +116,7 @@
 
     const textarea = editorRoot.querySelector(".h2c-textarea");
     textarea.focus();
+    scheduleOutsideEditorListener();
   }
 
   function createEditor() {
@@ -258,10 +261,52 @@
   }
 
   function closeEditor() {
+    removeOutsideEditorListener();
+
     if (editorRoot) {
       editorRoot.remove();
       editorRoot = null;
     }
+  }
+
+  function scheduleOutsideEditorListener() {
+    window.clearTimeout(outsideEditorTimer);
+    outsideEditorTimer = window.setTimeout(() => {
+      outsideEditorTimer = null;
+
+      if (editorRoot) {
+        addOutsideEditorListener();
+      }
+    }, 0);
+  }
+
+  function addOutsideEditorListener() {
+    if (isOutsideEditorListenerAttached) {
+      return;
+    }
+
+    document.addEventListener("mousedown", handleOutsideEditorMouseDown, true);
+    isOutsideEditorListenerAttached = true;
+  }
+
+  function removeOutsideEditorListener() {
+    window.clearTimeout(outsideEditorTimer);
+    outsideEditorTimer = null;
+
+    if (!isOutsideEditorListenerAttached) {
+      return;
+    }
+
+    document.removeEventListener("mousedown", handleOutsideEditorMouseDown, true);
+    isOutsideEditorListenerAttached = false;
+  }
+
+  function handleOutsideEditorMouseDown(event) {
+    if (isInsideWidget(event.target)) {
+      return;
+    }
+
+    closeEditor();
   }
 
   function setEditorStatus(root, message) {

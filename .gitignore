@@ -1,0 +1,12 @@
+# macOS 外接盘元数据
+.DS_Store
+._*
+
+# 依赖 / 构建
+node_modules/
+dist/
+build/
+
+# 日志 / 临时
+*.log
+.tmp/

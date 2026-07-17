@@ -4,11 +4,19 @@
   const BUTTON_WIDTH = 28;
   const BUTTON_HEIGHT = 28;
   const BUTTON_GAP = 6;
-  const EDITOR_WIDTH = 320;
-  const EDITOR_HEIGHT = 190;
+  const BUTTON_APPEAR_DELAY_MS = 500;
+  const EDITOR_WIDTH = 280;
+  const EDITOR_HEIGHT = 46;
+  const COMMENT_INPUT_MAX_HEIGHT = 88;
+  const EDITOR_ERROR_DURATION_MS = 800;
   const COMMENT_ICON_SVG = `
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
       <path d="M4.25 3.75H11.75C12.85 3.75 13.75 4.65 13.75 5.75V9.25C13.75 10.35 12.85 11.25 11.75 11.25H8L4.75 13.25V11.25H4.25C3.15 11.25 2.25 10.35 2.25 9.25V5.75C2.25 4.65 3.15 3.75 4.25 3.75Z" fill="none" stroke="#202124" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  const SAVE_ICON_SVG = `
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+      <path d="M3 7.15L5.7 9.75L11 4.25" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `;
 
@@ -37,7 +45,19 @@
 
   function scheduleSelectionCheck() {
     window.clearTimeout(selectionTimer);
-    selectionTimer = window.setTimeout(updateSelection, 80);
+
+    if (shouldHideButtonImmediately()) {
+      hideButton();
+      return;
+    }
+
+    selectionTimer = window.setTimeout(updateSelection, BUTTON_APPEAR_DELAY_MS);
+  }
+
+  function shouldHideButtonImmediately() {
+    const selection = window.getSelection();
+
+    return !selection || selection.rangeCount === 0 || !selection.toString().trim();
   }
 
   function updateSelection() {
@@ -85,6 +105,9 @@
   }
 
   function hideButton() {
+    window.clearTimeout(selectionTimer);
+    selectionTimer = null;
+
     if (buttonRoot) {
       buttonRoot.style.display = "none";
     }
@@ -124,6 +147,7 @@
     editorRoot.style.top = `${position.top}px`;
 
     const textarea = editorRoot.querySelector(".h2c-textarea");
+    resizeCommentInput(textarea);
     textarea.focus();
     scheduleOutsideEditorListener();
   }
@@ -132,49 +156,86 @@
     const root = document.createElement("div");
     root.className = WIDGET_CLASS;
 
-    const card = document.createElement("div");
-    card.className = "h2c-card";
-    card.setAttribute("role", "dialog");
-    card.setAttribute("aria-label", "添加评论");
+    const editor = document.createElement("div");
+    editor.className = "h2c-editor";
+    editor.setAttribute("role", "dialog");
+    editor.setAttribute("aria-label", "添加评论");
+
+    const capsule = document.createElement("div");
+    capsule.className = "h2c-capsule";
 
     const textarea = document.createElement("textarea");
     textarea.className = "h2c-textarea";
     textarea.placeholder = "写一句评论";
+    textarea.rows = 1;
+    textarea.setAttribute("aria-label", "写一句评论");
+    textarea.addEventListener("input", () => handleEditorInput(root, textarea));
+    textarea.addEventListener("keydown", (event) => handleEditorKeyDown(event, root));
 
-    const actions = document.createElement("div");
-    actions.className = "h2c-actions";
-
-    const cancelButton = createActionButton("取消", "h2c-action-secondary");
-    cancelButton.addEventListener("click", closeEditor);
-
-    const saveButton = createActionButton("保存", "h2c-action-primary");
+    const saveButton = createSaveButton();
     saveButton.addEventListener("click", () => saveCurrentNote(root));
 
     const status = document.createElement("div");
     status.className = "h2c-status";
     status.setAttribute("aria-live", "polite");
 
-    actions.append(cancelButton, saveButton);
-    card.append(textarea, actions, status);
-    root.appendChild(card);
+    capsule.append(textarea, saveButton);
+    editor.append(capsule, status);
+    root.appendChild(editor);
     return root;
   }
 
-  function createActionButton(label, variantClass) {
+  function createSaveButton() {
     const button = document.createElement("button");
-    button.className = `h2c-action ${variantClass}`;
+    button.className = "h2c-save-button";
     button.type = "button";
-    button.textContent = label;
+    button.setAttribute("aria-label", "保存");
+    button.innerHTML = SAVE_ICON_SVG;
     return button;
+  }
+
+  function handleEditorInput(root, textarea) {
+    resizeCommentInput(textarea);
+    setEditorStatus(root, "");
+  }
+
+  function handleEditorKeyDown(event, root) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeEditor();
+      return;
+    }
+
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      saveCurrentNote(root);
+    }
+  }
+
+  function resizeCommentInput(textarea) {
+    const capsule = textarea.closest(".h2c-capsule");
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, COMMENT_INPUT_MAX_HEIGHT)}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > COMMENT_INPUT_MAX_HEIGHT ? "auto" : "hidden";
+
+    if (capsule) {
+      capsule.classList.toggle("h2c-tall", textarea.scrollHeight > 32);
+    }
   }
 
   async function saveCurrentNote(root) {
     const textarea = root.querySelector(".h2c-textarea");
-    const saveButton = root.querySelector(".h2c-action-primary");
+    const saveButton = root.querySelector(".h2c-save-button");
     const comment = textarea.value.trim();
 
+    if (saveButton.disabled) {
+      return;
+    }
+
     if (!comment) {
-      setEditorStatus(root, "评论不能为空");
+      showTemporaryEditorError(root);
       return;
     }
 
@@ -190,6 +251,23 @@
       saveButton.disabled = false;
       setEditorStatus(root, error.message || String(error));
     }
+  }
+
+  function showTemporaryEditorError(root) {
+    const capsule = root.querySelector(".h2c-capsule");
+
+    if (!capsule) {
+      return;
+    }
+
+    capsule.classList.add("h2c-error");
+    window.setTimeout(() => {
+      const status = root.querySelector(".h2c-status");
+
+      if (status && !status.textContent) {
+        capsule.classList.remove("h2c-error");
+      }
+    }, EDITOR_ERROR_DURATION_MS);
   }
 
   function sendSaveNote(note) {
@@ -320,7 +398,14 @@
 
   function setEditorStatus(root, message) {
     const status = root.querySelector(".h2c-status");
+    const capsule = root.querySelector(".h2c-capsule");
+
+    if (!status || !capsule) {
+      return;
+    }
+
     status.textContent = message;
+    capsule.classList.toggle("h2c-error", Boolean(message));
   }
 
   function getSelectionRect(selection) {

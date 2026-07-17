@@ -49,8 +49,13 @@ export function renderNoteEntry(note) {
   const comment = normalizeText(note.comment);
   const infoLine = renderInfoLine(note);
   const urlLine = `> ${normalizeText(note.url)}`;
+  const sourceBlock = `${infoLine}\n${urlLine}`;
 
-  return `${quote}\n\n我的评论:${comment}\n\n${infoLine}\n${urlLine}`;
+  if (!comment) {
+    return `${quote}\n\n${sourceBlock}`;
+  }
+
+  return `${quote}\n\n我的评论:${comment}\n\n${sourceBlock}`;
 }
 
 function groupNotesByDate(notes) {

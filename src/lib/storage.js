@@ -53,7 +53,7 @@ function normalizeNote(note) {
   const cleanNote = {
     id: requireString(note.id, "id"),
     text: requireString(note.text, "text"),
-    comment: requireString(note.comment, "comment"),
+    comment: String(note.comment || "").trim(),
     url: requireString(note.url, "url"),
     title: String(note.title || ""),
     author: String(note.author || ""),

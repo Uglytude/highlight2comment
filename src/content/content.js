@@ -1,14 +1,22 @@
 (() => {
   const SAVE_NOTE_MESSAGE = "H2C_SAVE_NOTE";
   const WIDGET_CLASS = "h2c-root";
-  const BUTTON_WIDTH = 28;
-  const BUTTON_HEIGHT = 28;
-  const BUTTON_GAP = 6;
+  const ACTION_BUTTON_SIZE = 26;
+  const ACTION_BAR_PADDING = 3;
+  const ACTION_BAR_GAP = 2;
+  const ACTION_BAR_WIDTH = ACTION_BUTTON_SIZE * 2 + ACTION_BAR_PADDING * 2 + ACTION_BAR_GAP;
+  const ACTION_BAR_HEIGHT = ACTION_BUTTON_SIZE + ACTION_BAR_PADDING * 2;
+  const WIDGET_GAP = 6;
   const BUTTON_APPEAR_DELAY_MS = 500;
   const EDITOR_WIDTH = 280;
   const EDITOR_HEIGHT = 46;
   const COMMENT_INPUT_MAX_HEIGHT = 88;
   const EDITOR_ERROR_DURATION_MS = 800;
+  const HIGHLIGHT_ICON_SVG = `
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M3.5 8.2L6.35 11L12.5 4.75" fill="none" stroke="#202124" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
   const COMMENT_ICON_SVG = `
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
       <path d="M4.25 3.75H11.75C12.85 3.75 13.75 4.65 13.75 5.75V9.25C13.75 10.35 12.85 11.25 11.75 11.25H8L4.75 13.25V11.25H4.25C3.15 11.25 2.25 10.35 2.25 9.25V5.75C2.25 4.65 3.15 3.75 4.25 3.75Z" fill="none" stroke="#202124" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -35,7 +43,11 @@
   window.addEventListener("resize", hideButton);
 
   function handleSelectionTrigger(event) {
-    if (isInsideWidget(event.target) || isEditableTarget(event.target)) {
+    if (isInsideWidget(event.target)) {
+      return;
+    }
+
+    if (isEditableTarget(event.target)) {
       hideButton();
       return;
     }
@@ -109,6 +121,7 @@
     selectionTimer = null;
 
     if (buttonRoot) {
+      resetButtonRoot(buttonRoot);
       buttonRoot.style.display = "none";
     }
   }
@@ -117,17 +130,57 @@
     const root = document.createElement("div");
     root.className = WIDGET_CLASS;
 
-    const button = document.createElement("button");
-    button.className = "h2c-button";
-    button.type = "button";
-    button.setAttribute("aria-label", "加评论");
-    button.title = "加评论";
-    button.innerHTML = COMMENT_ICON_SVG;
-    button.addEventListener("mousedown", (event) => event.preventDefault());
-    button.addEventListener("click", openEditor);
+    const actionBar = document.createElement("div");
+    actionBar.className = "h2c-action-bar";
+    actionBar.setAttribute("role", "toolbar");
+    actionBar.setAttribute("aria-label", "划线操作");
 
-    root.appendChild(button);
+    const highlightButton = createActionButton("只存划线", HIGHLIGHT_ICON_SVG);
+    highlightButton.addEventListener("click", saveHighlightOnly);
+
+    const commentButton = createActionButton("加评论", COMMENT_ICON_SVG);
+    commentButton.addEventListener("click", openEditor);
+
+    const status = document.createElement("div");
+    status.className = "h2c-button-status";
+    status.setAttribute("aria-live", "polite");
+
+    actionBar.append(highlightButton, commentButton);
+    root.append(actionBar, status);
     return root;
+  }
+
+  function createActionButton(label, iconSvg) {
+    const button = document.createElement("button");
+    button.className = "h2c-action-button";
+    button.type = "button";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.innerHTML = iconSvg;
+    button.addEventListener("mousedown", (event) => event.preventDefault());
+    return button;
+  }
+
+  async function saveHighlightOnly(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+
+    if (!selectedText || !selectedRect || !button || button.disabled) {
+      return;
+    }
+
+    button.disabled = true;
+    setButtonStatus("");
+
+    try {
+      const note = createNote(selectedText, "");
+      await sendSaveNote(note);
+      hideButton();
+      window.getSelection().removeAllRanges();
+    } catch (error) {
+      button.disabled = false;
+      setButtonStatus(error.message || String(error));
+    }
   }
 
   function openEditor(event) {
@@ -408,6 +461,31 @@
     capsule.classList.toggle("h2c-error", Boolean(message));
   }
 
+  function setButtonStatus(message) {
+    if (!buttonRoot) {
+      return;
+    }
+
+    const status = buttonRoot.querySelector(".h2c-button-status");
+
+    if (status) {
+      status.textContent = message;
+    }
+  }
+
+  function resetButtonRoot(root) {
+    const status = root.querySelector(".h2c-button-status");
+    const buttons = root.querySelectorAll(".h2c-action-button");
+
+    if (status) {
+      status.textContent = "";
+    }
+
+    for (const button of buttons) {
+      button.disabled = false;
+    }
+  }
+
   function getSelectionRect(selection) {
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
@@ -443,15 +521,15 @@
   }
 
   function getButtonPosition(rect) {
-    const preferredLeft = rect.right + BUTTON_GAP;
-    const fallbackLeft = rect.left - BUTTON_WIDTH - BUTTON_GAP;
-    const maxLeft = window.innerWidth - BUTTON_WIDTH - 8;
+    const preferredLeft = rect.right + WIDGET_GAP;
+    const fallbackLeft = rect.left - ACTION_BAR_WIDTH - WIDGET_GAP;
+    const maxLeft = window.innerWidth - ACTION_BAR_WIDTH - 8;
     const left = preferredLeft <= maxLeft ? preferredLeft : fallbackLeft;
-    const centerTop = rect.top + (rect.height - BUTTON_HEIGHT) / 2;
+    const centerTop = rect.top + (rect.height - ACTION_BAR_HEIGHT) / 2;
 
     return {
       left: clamp(left, 8, maxLeft),
-      top: clamp(centerTop, 8, window.innerHeight - BUTTON_HEIGHT - 8),
+      top: clamp(centerTop, 8, window.innerHeight - ACTION_BAR_HEIGHT - 8),
     };
   }
 

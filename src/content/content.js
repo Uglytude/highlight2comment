@@ -1,6 +1,7 @@
 (() => {
   const SAVE_NOTE_MESSAGE = "H2C_SAVE_NOTE";
-  const DISCONNECTED_MESSAGE = "插件刚更新过,请刷新本页面再试";
+  const DISCONNECTED_MESSAGE = getMessage("extensionDisconnectedRefresh");
+  const SAVE_FAILED_MESSAGE = getMessage("saveFailedStatus");
   const WIDGET_CLASS = "h2c-root";
   const ACTION_BUTTON_SIZE = 26;
   const ACTION_BAR_PADDING = 3;
@@ -158,12 +159,18 @@
     const actionBar = document.createElement("div");
     actionBar.className = "h2c-action-bar";
     actionBar.setAttribute("role", "toolbar");
-    actionBar.setAttribute("aria-label", "划线操作");
+    actionBar.setAttribute("aria-label", getMessage("selectionToolbarAria"));
 
-    const highlightButton = createActionButton("只存划线", HIGHLIGHT_ICON_SVG);
+    const highlightButton = createActionButton(
+      getMessage("highlightOnlyAction"),
+      HIGHLIGHT_ICON_SVG,
+    );
     highlightButton.addEventListener("click", saveHighlightOnly);
 
-    const commentButton = createActionButton("加评论", COMMENT_ICON_SVG);
+    const commentButton = createActionButton(
+      getMessage("addCommentAction"),
+      COMMENT_ICON_SVG,
+    );
     commentButton.addEventListener("click", openEditor);
 
     const status = document.createElement("div");
@@ -247,16 +254,16 @@
     const editor = document.createElement("div");
     editor.className = "h2c-editor";
     editor.setAttribute("role", "dialog");
-    editor.setAttribute("aria-label", "添加评论");
+    editor.setAttribute("aria-label", getMessage("editorDialogLabel"));
 
     const capsule = document.createElement("div");
     capsule.className = "h2c-capsule";
 
     const textarea = document.createElement("textarea");
     textarea.className = "h2c-textarea";
-    textarea.placeholder = "写一句评论";
+    textarea.placeholder = getMessage("commentPlaceholder");
     textarea.rows = 1;
-    textarea.setAttribute("aria-label", "写一句评论");
+    textarea.setAttribute("aria-label", getMessage("commentPlaceholder"));
     textarea.addEventListener("input", () => handleEditorInput(root, textarea));
     textarea.addEventListener("keydown", (event) => handleEditorKeyDown(event, root));
 
@@ -277,7 +284,7 @@
     const button = document.createElement("button");
     button.className = "h2c-save-button";
     button.type = "button";
-    button.setAttribute("aria-label", "保存");
+    button.setAttribute("aria-label", getMessage("saveAction"));
     button.innerHTML = SAVE_ICON_SVG;
     return button;
   }
@@ -385,7 +392,9 @@
             }
 
             if (!response || !response.ok) {
-              reject(new Error(getSaveErrorMessage(response ? response.error : "保存失败")));
+              reject(
+                new Error(getSaveErrorMessage(response ? response.error : SAVE_FAILED_MESSAGE)),
+              );
               return;
             }
 
@@ -671,5 +680,25 @@
     } catch {
       return false;
     }
+  }
+
+  function getMessage(key, substitutions = []) {
+    try {
+      if (
+        typeof chrome !== "undefined" &&
+        chrome.i18n &&
+        typeof chrome.i18n.getMessage === "function"
+      ) {
+        const message = chrome.i18n.getMessage(key, substitutions);
+
+        if (message) {
+          return message;
+        }
+      }
+    } catch {
+      // Return the key so missing i18n fails visibly.
+    }
+
+    return key;
   }
 })();

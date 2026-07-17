@@ -1,0 +1,218 @@
+{
+  "extDescription": {
+    "message": "Webtext markieren, Kommentar hinzufügen, lokal speichern und als Markdown exportieren.",
+    "description": "Extension description shown by Chrome."
+  },
+  "countUnit": {
+    "message": "Notizen",
+    "description": "Unit label shown next to the local note count."
+  },
+  "obsidianLabel": {
+    "message": "Obsidian",
+    "description": "Label for the Obsidian connection row."
+  },
+  "obsidianStateConnected": {
+    "message": "Verbunden",
+    "description": "Obsidian connection state when write permission is granted."
+  },
+  "obsidianStateNotConnected": {
+    "message": "Nicht verbunden",
+    "description": "Obsidian connection state when no folder is saved."
+  },
+  "obsidianStateReauthorizationRemembered": {
+    "message": "Neu autorisieren (Ordner gemerkt)",
+    "description": "Obsidian connection state when the saved folder needs permission again."
+  },
+  "obsidianStateReauthorizationRequired": {
+    "message": "Neu autorisieren",
+    "description": "Obsidian connection state when permission is denied."
+  },
+  "obsidianStateUnsupported": {
+    "message": "Nicht unterstützt",
+    "description": "Obsidian connection state when the browser lacks File System Access support."
+  },
+  "connectObsidianFolderButton": {
+    "message": "Obsidian-Ordner verbinden",
+    "description": "Button label for first-time Obsidian folder authorization."
+  },
+  "reconnectAndWriteObsidianButton": {
+    "message": "Neu verbinden und in Obsidian schreiben",
+    "description": "Button label when Obsidian permission must be renewed."
+  },
+  "downloadAllButton": {
+    "message": "Alle herunterladen",
+    "description": "Button label for exporting all local notes."
+  },
+  "connectedDirectorySummary": {
+    "message": "Notizen werden automatisch in $NAME$ geschrieben ·",
+    "description": "Small note shown when an Obsidian folder is connected.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Obsidian"
+      }
+    }
+  },
+  "changeFolderLink": {
+    "message": "Ordner wechseln",
+    "description": "Link label for choosing a different Obsidian folder."
+  },
+  "chooseNewObsidianFolderStatus": {
+    "message": "Wähle einen neuen Obsidian-Ordner.",
+    "description": "Status shown before reauthorizing a new Obsidian folder."
+  },
+  "connectedWritingPendingStatus": {
+    "message": "Verbunden. Ausstehende Notizen werden geschrieben.",
+    "description": "Status shown after connecting Obsidian before pending notes are appended."
+  },
+  "noLocalNotesStatus": {
+    "message": "Noch keine lokalen Notizen.",
+    "description": "Status shown when the user exports before saving any notes."
+  },
+  "exportDownloadedStatus": {
+    "message": "$COUNT$ Notizen heruntergeladen.",
+    "description": "Status shown after exporting local notes.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reauthorizationRememberedStatus": {
+    "message": "Obsidian muss neu autorisiert werden (Ordner gemerkt). Lokale Notizen bleiben im Browser gespeichert.",
+    "description": "Status shown when a remembered folder needs permission again."
+  },
+  "reauthorizationRequiredStatus": {
+    "message": "Obsidian muss neu autorisiert werden. Lokale Notizen bleiben im Browser gespeichert.",
+    "description": "Status shown when Obsidian permission was denied."
+  },
+  "noPendingNotesStatus": {
+    "message": "Keine ausstehenden Notizen zum Anhängen.",
+    "description": "Status shown when all local notes are already written to Obsidian."
+  },
+  "writingObsidianStatus": {
+    "message": "Schreibe in Obsidian.",
+    "description": "Status shown while appending pending notes to Obsidian."
+  },
+  "appendedToLogStatus": {
+    "message": "$COUNT$ Notizen an $FILE$ angehängt.",
+    "description": "Status shown after pending notes are appended to the Obsidian log.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "file": {
+        "content": "$2",
+        "example": "highlight2comment-log.md"
+      }
+    }
+  },
+  "reconnectingObsidianFolderStatus": {
+    "message": "Obsidian-Ordner wird neu verbunden.",
+    "description": "Status shown when reconnecting a remembered or denied Obsidian folder."
+  },
+  "chooseObsidianFolderStatus": {
+    "message": "Wähle einen Obsidian-Ordner.",
+    "description": "Status shown before first-time Obsidian folder authorization."
+  },
+  "folderSelectionCancelledStatus": {
+    "message": "Ordnerauswahl abgebrochen.",
+    "description": "Status shown when the user cancels the folder picker."
+  },
+  "unknownErrorStatus": {
+    "message": "Ein unbekannter Fehler ist aufgetreten.",
+    "description": "Fallback status for unexpected errors without a message."
+  },
+  "extensionDisconnectedRefresh": {
+    "message": "Die Erweiterung wurde gerade aktualisiert. Lade diese Seite neu und versuche es erneut.",
+    "description": "Content script message shown when the injected page script lost connection to the extension."
+  },
+  "selectionToolbarAria": {
+    "message": "Markierungsaktionen",
+    "description": "ARIA label for the small selection action toolbar."
+  },
+  "highlightOnlyAction": {
+    "message": "Nur Markierung speichern",
+    "description": "Tooltip and ARIA label for saving selected text without a comment."
+  },
+  "addCommentAction": {
+    "message": "Kommentar hinzufügen",
+    "description": "Tooltip and ARIA label for opening the comment editor."
+  },
+  "editorDialogLabel": {
+    "message": "Kommentar hinzufügen",
+    "description": "ARIA label for the comment editor dialog."
+  },
+  "commentPlaceholder": {
+    "message": "Kommentar schreiben",
+    "description": "Placeholder and ARIA label for the comment textarea."
+  },
+  "saveAction": {
+    "message": "Speichern",
+    "description": "ARIA label for the comment editor save button."
+  },
+  "saveFailedStatus": {
+    "message": "Speichern fehlgeschlagen",
+    "description": "Fallback content script status when saving a note fails without a specific error."
+  },
+  "logCommentPrefix": {
+    "message": "Kommentar: ",
+    "description": "Prefix written before a saved comment in exported Markdown."
+  },
+  "unknownSource": {
+    "message": "Unbekannte Quelle",
+    "description": "Markdown source label used when a note URL cannot be parsed."
+  },
+  "invalidNoteError": {
+    "message": "Notizdaten fehlen oder sind ungültig.",
+    "description": "Error shown when a note payload is missing or malformed."
+  },
+  "requiredNoteFieldError": {
+    "message": "note.$FIELD$ ist erforderlich.",
+    "description": "Error shown when a required note field is empty.",
+    "placeholders": {
+      "field": {
+        "content": "$1",
+        "example": "text"
+      }
+    }
+  },
+  "invalidNoteTimestampError": {
+    "message": "note.ts ist keine gültige Zeit.",
+    "description": "Error shown when a note timestamp cannot be parsed."
+  },
+  "invalidNoteDateKeyError": {
+    "message": "note.dateKey muss YYMMDD sein.",
+    "description": "Error shown when a note date key does not use the YYMMDD format."
+  },
+  "obsidianWritePermissionMissingError": {
+    "message": "Keine Schreibberechtigung für den Obsidian-Ordner.",
+    "description": "Error shown when the chosen Obsidian folder does not grant write permission."
+  },
+  "obsidianFolderNotConnectedError": {
+    "message": "Noch kein Obsidian-Ordner verbunden.",
+    "description": "Error shown when a write is attempted before connecting a folder."
+  },
+  "obsidianFolderNeedsReauthorizationError": {
+    "message": "Der Obsidian-Ordner muss neu autorisiert werden; lokale Notizen bleiben im Browser gespeichert.",
+    "description": "Error shown when a saved Obsidian folder no longer has write permission."
+  },
+  "fileSystemAccessUnsupportedError": {
+    "message": "Dieser Browser unterstützt die File System Access API nicht.",
+    "description": "Error shown when the browser cannot use folder authorization."
+  },
+  "indexedDbOpenFailedError": {
+    "message": "IndexedDB konnte nicht geöffnet werden.",
+    "description": "Error shown when the saved folder handle database cannot open."
+  },
+  "indexedDbOperationFailedError": {
+    "message": "IndexedDB-Vorgang fehlgeschlagen.",
+    "description": "Error shown when a saved folder handle database operation fails."
+  },
+  "indexedDbOperationAbortedError": {
+    "message": "IndexedDB-Vorgang abgebrochen.",
+    "description": "Error shown when a saved folder handle database operation is aborted."
+  }
+}

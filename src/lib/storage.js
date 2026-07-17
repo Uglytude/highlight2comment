@@ -1,3 +1,5 @@
+import { getMessage as t } from "./i18n.js";
+
 export const NOTES_KEY = "h2c_notes";
 export const WRITTEN_NOTE_IDS_KEY = "h2c_written_note_ids";
 
@@ -52,7 +54,7 @@ export async function markNotesWritten(noteIds) {
 
 function normalizeNote(note) {
   if (!note || typeof note !== "object") {
-    throw new Error("note 数据为空或格式错误");
+    throw new Error(t("invalidNoteError"));
   }
 
   const cleanNote = {
@@ -73,7 +75,7 @@ function requireString(value, fieldName) {
   const text = String(value || "").trim();
 
   if (!text) {
-    throw new Error(`note.${fieldName} 不能为空`);
+    throw new Error(t("requiredNoteFieldError", [fieldName]));
   }
 
   return text;
@@ -83,7 +85,7 @@ function requireIsoString(value) {
   const ts = requireString(value, "ts");
 
   if (Number.isNaN(Date.parse(ts))) {
-    throw new Error("note.ts 不是有效时间");
+    throw new Error(t("invalidNoteTimestampError"));
   }
 
   return ts;
@@ -93,7 +95,7 @@ function requireDateKey(value) {
   const dateKey = requireString(value, "dateKey");
 
   if (!/^\d{6}$/.test(dateKey)) {
-    throw new Error("note.dateKey 必须是 YYMMDD");
+    throw new Error(t("invalidNoteDateKeyError"));
   }
 
   return dateKey;

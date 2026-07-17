@@ -1,6 +1,8 @@
 const DATE_HEADING_PATTERN = /^##\s+(\d{6})\s*$/gm;
 const ENTRY_NUMBER_PATTERN = /^\*\*(\d+)\.\*\*\s*$/gm;
 const FOOTNOTE_DEFINITION_LINE_PATTERN = /^\[\^[^\]]+\]:/;
+const DEFAULT_COMMENT_PREFIX = "评:";
+const DEFAULT_UNKNOWN_SOURCE_LABEL = "未知来源";
 
 export function getDateKey(date = new Date()) {
   const year = String(date.getFullYear()).slice(-2);
@@ -9,16 +11,18 @@ export function getDateKey(date = new Date()) {
   return `${year}${month}${day}`;
 }
 
-export function renderNotes(notes) {
+export function renderNotes(notes, options = {}) {
+  const renderOptions = normalizeRenderOptions(options);
   const groupedNotes = groupNotesByDate(sortNotes(notes));
   const sections = groupedNotes.map(([dateKey, dayNotes]) => {
-    return renderDaySection(dateKey, dayNotes);
+    return renderDaySection(dateKey, dayNotes, renderOptions);
   });
 
   return sections.length > 0 ? `${sections.join("\n\n")}\n` : "";
 }
 
-export function mergeNotesIntoLog(notes, existingMarkdown = "") {
+export function mergeNotesIntoLog(notes, existingMarkdown = "", options = {}) {
+  const renderOptions = normalizeRenderOptions(options);
   const logText = String(existingMarkdown || "");
   const groupedNotes = groupNotesByDate(sortNotes(notes));
 
@@ -27,13 +31,13 @@ export function mergeNotesIntoLog(notes, existingMarkdown = "") {
   }
 
   if (!logText.trim()) {
-    return renderNotes(notes);
+    return renderNotes(notes, renderOptions);
   }
 
   const lastSection = findLastDaySection(logText);
 
   if (!lastSection) {
-    return appendRenderedSections(logText, groupedNotes);
+    return appendRenderedSections(logText, groupedNotes, renderOptions);
   }
 
   let mergedMarkdown = logText;
@@ -45,6 +49,7 @@ export function mergeNotesIntoLog(notes, existingMarkdown = "") {
         logText,
         lastSection,
         dayNotes,
+        renderOptions,
       );
       continue;
     }
@@ -56,16 +61,18 @@ export function mergeNotesIntoLog(notes, existingMarkdown = "") {
     return mergedMarkdown;
   }
 
-  return appendRenderedSections(mergedMarkdown, groupsToAppend);
+  return appendRenderedSections(mergedMarkdown, groupsToAppend, renderOptions);
 }
 
-export function renderDaySection(dateKey, notes) {
-  const entries = renderNoteEntries(notes, 1);
-  const footnotes = renderFootnoteDefinitions(notes);
+export function renderDaySection(dateKey, notes, options = {}) {
+  const renderOptions = normalizeRenderOptions(options);
+  const entries = renderNoteEntries(notes, 1, renderOptions);
+  const footnotes = renderFootnoteDefinitions(notes, renderOptions);
   return `## ${dateKey}\n\n${entries}\n\n${footnotes}`;
 }
 
-export function renderNoteEntry(note, entryNumber = 1) {
+export function renderNoteEntry(note, entryNumber = 1, options = {}) {
+  const renderOptions = normalizeRenderOptions(options);
   const quote = renderQuotedOriginal(note.text, getFootnoteLabel(note));
   const comment = normalizeText(note.comment);
 
@@ -73,7 +80,7 @@ export function renderNoteEntry(note, entryNumber = 1) {
     return `**${entryNumber}.**\n\n${quote}`;
   }
 
-  return `**${entryNumber}.**\n\n${quote}\n\n评:${comment}`;
+  return `**${entryNumber}.**\n\n${quote}\n\n${renderOptions.commentPrefix}${comment}`;
 }
 
 function groupNotesByDate(notes) {
@@ -102,14 +109,14 @@ function sortNotes(notes) {
   });
 }
 
-function renderNoteEntries(notes, startNumber) {
+function renderNoteEntries(notes, startNumber, options) {
   return notes
-    .map((note, index) => renderNoteEntry(note, startNumber + index))
+    .map((note, index) => renderNoteEntry(note, startNumber + index, options))
     .join("\n\n");
 }
 
-function renderFootnoteDefinitions(notes) {
-  return notes.map(renderFootnoteDefinition).join("\n");
+function renderFootnoteDefinitions(notes, options) {
+  return notes.map((note) => renderFootnoteDefinition(note, options)).join("\n");
 }
 
 function renderQuotedOriginal(text, footnoteLabel) {
@@ -126,8 +133,8 @@ function renderQuotedOriginal(text, footnoteLabel) {
     .join("\n");
 }
 
-function renderFootnoteDefinition(note) {
-  const parts = [getSiteName(note.url)];
+function renderFootnoteDefinition(note, options) {
+  const parts = [getSiteName(note.url, options)];
   const author = normalizeText(note.author);
 
   if (author) {
@@ -149,18 +156,18 @@ function getFootnoteLabel(note) {
   return label;
 }
 
-function appendRenderedSections(markdown, groupedNotes) {
+function appendRenderedSections(markdown, groupedNotes, options) {
   const sections = groupedNotes.map(([dateKey, dayNotes]) => {
-    return renderDaySection(dateKey, dayNotes);
+    return renderDaySection(dateKey, dayNotes, options);
   });
 
   return `${markdown}${appendSeparator(markdown)}${sections.join("\n\n")}\n`;
 }
 
-function insertNotesIntoLastDaySection(markdown, section, notes) {
+function insertNotesIntoLastDaySection(markdown, section, notes, options) {
   const nextNumber = findMaxEntryNumber(section.text) + 1;
-  const newEntries = renderNoteEntries(notes, nextNumber);
-  const newFootnotes = renderFootnoteDefinitions(notes);
+  const newEntries = renderNoteEntries(notes, nextNumber, options);
+  const newFootnotes = renderFootnoteDefinitions(notes, options);
   const footnoteBlock = findTrailingFootnoteBlock(section.text);
 
   if (!footnoteBlock) {
@@ -265,11 +272,11 @@ function findLastDaySection(markdown) {
   };
 }
 
-function getSiteName(url) {
+function getSiteName(url, options) {
   try {
-    return new URL(url).hostname.replace(/^www\./, "") || "未知来源";
+    return new URL(url).hostname.replace(/^www\./, "") || options.unknownSourceLabel;
   } catch {
-    return "未知来源";
+    return options.unknownSourceLabel;
   }
 }
 
@@ -299,4 +306,11 @@ function appendSeparator(markdown) {
   }
 
   return "\n\n";
+}
+
+function normalizeRenderOptions(options = {}) {
+  return {
+    commentPrefix: String(options.commentPrefix || DEFAULT_COMMENT_PREFIX),
+    unknownSourceLabel: String(options.unknownSourceLabel || DEFAULT_UNKNOWN_SOURCE_LABEL),
+  };
 }

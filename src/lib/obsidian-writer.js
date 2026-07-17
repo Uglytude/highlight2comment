@@ -1,3 +1,5 @@
+import { getMessage as t } from "./i18n.js";
+
 export const LOG_FILE_NAME = "highlight2comment-log.md";
 
 const DB_NAME = "highlight2comment";
@@ -97,7 +99,7 @@ async function pickAndSaveDirectory() {
   const permission = await requestWritePermission(directoryHandle);
 
   if (permission !== "granted") {
-    throw new Error("没有获得 Obsidian 文件夹写入权限");
+    throw new Error(t("obsidianWritePermissionMissingError"));
   }
 
   await saveDirectoryHandle(directoryHandle);
@@ -111,13 +113,13 @@ async function requireWritableDirectory() {
   const directoryHandle = await getDirectoryHandle();
 
   if (!directoryHandle) {
-    throw new Error("还没有连接 Obsidian 文件夹");
+    throw new Error(t("obsidianFolderNotConnectedError"));
   }
 
   const permission = await directoryHandle.queryPermission(READ_WRITE_MODE);
 
   if (permission !== "granted") {
-    throw new Error("Obsidian 文件夹需要重新授权;本地笔记仍然保存在浏览器里");
+    throw new Error(t("obsidianFolderNeedsReauthorizationError"));
   }
 
   return directoryHandle;
@@ -166,7 +168,7 @@ async function saveDirectoryHandle(directoryHandle) {
 
 function assertSupported() {
   if (!isFileSystemAccessSupported()) {
-    throw new Error("当前浏览器不支持 File System Access API");
+    throw new Error(t("fileSystemAccessUnsupportedError"));
   }
 }
 
@@ -183,7 +185,9 @@ async function openDatabase() {
     };
 
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error("IndexedDB 打开失败"));
+    request.onerror = () => {
+      reject(request.error || new Error(t("indexedDbOpenFailedError")));
+    };
   });
 }
 
@@ -219,12 +223,16 @@ async function runStore(mode, createRequest) {
 
     transaction.onerror = () => {
       database.close();
-      reject(transaction.error || request.error || new Error("IndexedDB 操作失败"));
+      reject(
+        transaction.error || request.error || new Error(t("indexedDbOperationFailedError")),
+      );
     };
 
     transaction.onabort = () => {
       database.close();
-      reject(transaction.error || request.error || new Error("IndexedDB 操作中断"));
+      reject(
+        transaction.error || request.error || new Error(t("indexedDbOperationAbortedError")),
+      );
     };
   });
 }

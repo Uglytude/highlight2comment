@@ -1,6 +1,7 @@
 import { getDateKey, mergeNotesIntoLog, renderNotes } from "../lib/markdown.js";
 import { log } from "../lib/logger.js";
 import { refreshBadge } from "../lib/badge.js";
+import { getMessage as t } from "../lib/i18n.js";
 import {
   getNoteCount,
   getNotes,
@@ -27,11 +28,12 @@ document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   bindElements();
+  applyStaticMessages();
   bindEvents();
 
   if (!isFileSystemAccessSupported()) {
     elements.connectButton.disabled = true;
-    setObsidianState("当前浏览器不支持");
+    setObsidianState(t("obsidianStateUnsupported"));
   }
 
   await refreshSummary();
@@ -45,8 +47,16 @@ function bindElements() {
   elements.downloadButton = document.getElementById("download-button");
   elements.status = document.getElementById("status");
   elements.connectedDirectory = document.getElementById("connected-directory");
-  elements.connectedDirectoryName = document.getElementById("connected-directory-name");
+  elements.connectedDirectorySummary = document.getElementById("connected-directory-summary");
   elements.reauthorizeLink = document.getElementById("reauthorize-link");
+}
+
+function applyStaticMessages() {
+  document.documentElement.lang = getDocumentLanguage();
+
+  for (const element of document.querySelectorAll("[data-i18n]")) {
+    element.textContent = t(element.dataset.i18n);
+  }
 }
 
 function bindEvents() {
@@ -100,7 +110,7 @@ async function handleReauthorizeClick(event) {
     action: reauthorizeDirectory,
     cancelLogAction: "obsidian_reauthorization_cancelled",
     failureLogAction: "obsidian_reauthorization_failed",
-    startMessage: "请选择新的 Obsidian 文件夹。",
+    startMessage: t("chooseNewObsidianFolderStatus"),
     successLogAction: "obsidian_directory_reauthorized",
   });
 }
@@ -114,7 +124,7 @@ async function connectDirectory(options) {
     await log(options.successLogAction, {
       fileName: LOG_FILE_NAME,
     });
-    setStatus("已连接,正在写入待追加笔记。");
+    setStatus(t("connectedWritingPendingStatus"));
     await syncPendingNotes(false);
   } catch (error) {
     if (isAbortError(error)) {
@@ -142,11 +152,11 @@ async function handleDownloadClick() {
     const notes = await getNotes();
 
     if (notes.length === 0) {
-      setStatus("还没有本地笔记。");
+      setStatus(t("noLocalNotesStatus"));
       return;
     }
 
-    const markdown = renderNotes(notes);
+    const markdown = renderNotes(notes, getMarkdownRenderOptions());
     const filename = `highlight2comment-${getDateKey(new Date())}.md`;
     downloadMarkdown(markdown, filename);
 
@@ -154,7 +164,7 @@ async function handleDownloadClick() {
       count: notes.length,
       filename,
     });
-    setStatus(`已下载 ${notes.length} 条笔记。`);
+    setStatus(t("exportDownloadedStatus", [String(notes.length)]));
   } catch (error) {
     await log("export_download_failed", {
       message: getErrorMessage(error),
@@ -183,12 +193,12 @@ async function tryAutoSyncPendingNotes() {
   }
 
   if (permissionState === "prompt") {
-    setStatus("Obsidian 需要重新授权(文件夹还记得);本地笔记仍然保存在浏览器里。", true);
+    setStatus(t("reauthorizationRememberedStatus"), true);
     return;
   }
 
   if (permissionState === "denied") {
-    setStatus("Obsidian 需要重新授权;本地笔记仍然保存在浏览器里。", true);
+    setStatus(t("reauthorizationRequiredStatus"), true);
   }
 }
 
@@ -204,17 +214,21 @@ async function syncPendingNotes(silent) {
 
     if (pendingNotes.length === 0) {
       if (!silent) {
-        setStatus("没有待追加笔记。");
+        setStatus(t("noPendingNotesStatus"));
       }
       return;
     }
 
     if (!silent) {
-      setStatus("正在写入 Obsidian。");
+      setStatus(t("writingObsidianStatus"));
     }
 
     const existingMarkdown = await readLogText();
-    const fullMarkdown = mergeNotesIntoLog(pendingNotes, existingMarkdown);
+    const fullMarkdown = mergeNotesIntoLog(
+      pendingNotes,
+      existingMarkdown,
+      getMarkdownRenderOptions(),
+    );
     await writeLogText(fullMarkdown);
     await markNotesWritten(pendingNotes.map((note) => note.id));
     await refreshBadge("obsidian_sync");
@@ -223,7 +237,9 @@ async function syncPendingNotes(silent) {
       count: pendingNotes.length,
       fileName: LOG_FILE_NAME,
     });
-    setStatus(`已追加 ${pendingNotes.length} 条到 ${LOG_FILE_NAME}。`);
+    setStatus(
+      t("appendedToLogStatus", [String(pendingNotes.length), LOG_FILE_NAME]),
+    );
   } catch (error) {
     await log("obsidian_append_failed", {
       message: getErrorMessage(error),
@@ -284,7 +300,9 @@ function setConnectedDirectory(permissionState, directoryName) {
 
   elements.connectButton.hidden = isConnected;
   elements.connectedDirectory.hidden = !isConnected;
-  elements.connectedDirectoryName.textContent = directoryName;
+  elements.connectedDirectorySummary.textContent = isConnected
+    ? t("connectedDirectorySummary", [directoryName])
+    : "";
 }
 
 function setConnectButtonLabel(permissionState) {
@@ -298,48 +316,67 @@ function setStatus(message, isError = false) {
 
 function permissionLabel(permissionState) {
   if (permissionState === "granted") {
-    return "已连接";
+    return t("obsidianStateConnected");
   }
 
   if (permissionState === "prompt") {
-    return "需重新授权(文件夹还记得)";
+    return t("obsidianStateReauthorizationRemembered");
   }
 
   if (permissionState === "denied") {
-    return "需重新授权";
+    return t("obsidianStateReauthorizationRequired");
   }
 
   if (permissionState === "unsupported") {
-    return "不支持";
+    return t("obsidianStateUnsupported");
   }
 
-  return "未连接";
+  return t("obsidianStateNotConnected");
 }
 
 function connectButtonLabel(permissionState) {
   if (permissionState === "prompt" || permissionState === "denied") {
-    return "重新连接并写入 Obsidian";
+    return t("reconnectAndWriteObsidianButton");
   }
 
-  return "连接 Obsidian 文件夹";
+  return t("connectObsidianFolderButton");
 }
 
 function getConnectStartMessage(permissionState) {
   if (permissionState === "prompt" || permissionState === "denied") {
-    return "正在重新连接 Obsidian 文件夹。";
+    return t("reconnectingObsidianFolderStatus");
   }
 
-  return "请选择 Obsidian 文件夹。";
+  return t("chooseObsidianFolderStatus");
 }
 
 function getErrorMessage(error) {
   if (error && error.name === "AbortError") {
-    return "已取消选择文件夹。";
+    return t("folderSelectionCancelledStatus");
   }
 
-  return error && error.message ? error.message : String(error);
+  return error && error.message ? error.message : t("unknownErrorStatus");
 }
 
 function isAbortError(error) {
   return error && error.name === "AbortError";
+}
+
+function getMarkdownRenderOptions() {
+  return {
+    commentPrefix: t("logCommentPrefix"),
+    unknownSourceLabel: t("unknownSource"),
+  };
+}
+
+function getDocumentLanguage() {
+  try {
+    if (chrome.i18n && typeof chrome.i18n.getUILanguage === "function") {
+      return chrome.i18n.getUILanguage().replace("_", "-");
+    }
+  } catch {
+    // Keep the static HTML fallback.
+  }
+
+  return "en";
 }

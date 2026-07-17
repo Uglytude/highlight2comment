@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "highlight2comment",
   "version": "0.1.0",
-  "description": "选中网页文字,写一句评论,本地保存并导出 Markdown。",
+  "default_locale": "en",
+  "description": "__MSG_extDescription__",
   "permissions": ["storage"],
   "background": {
     "service_worker": "background/service-worker.js",

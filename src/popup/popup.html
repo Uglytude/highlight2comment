@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,25 +10,36 @@
     <main class="popup">
       <header class="popup-header">
         <h1>highlight2comment</h1>
-        <div class="count"><span id="note-count">0</span> 条</div>
+        <div class="count">
+          <span id="note-count">0</span>
+          <span data-i18n="countUnit"></span>
+        </div>
       </header>
 
       <section class="state" aria-live="polite">
         <div>
-          <span class="label">Obsidian</span>
-          <span id="obsidian-state">未连接</span>
+          <span class="label" data-i18n="obsidianLabel"></span>
+          <span id="obsidian-state"></span>
         </div>
       </section>
 
       <div class="actions">
-        <button id="connect-button" type="button">连接 Obsidian 文件夹</button>
-        <button id="download-button" type="button">下载全部</button>
+        <button
+          id="connect-button"
+          type="button"
+          data-i18n="connectObsidianFolderButton"
+        ></button>
+        <button
+          id="download-button"
+          type="button"
+          data-i18n="downloadAllButton"
+        ></button>
       </div>
 
       <p id="status" class="status" role="status"></p>
       <p id="connected-directory" class="connected-directory" hidden>
-        笔记自动写入 <span id="connected-directory-name"></span> ·
-        <a id="reauthorize-link" href="#">更换文件夹</a>
+        <span id="connected-directory-summary"></span>
+        <a id="reauthorize-link" href="#" data-i18n="changeFolderLink"></a>
       </p>
     </main>
     <script type="module" src="./popup.js"></script>

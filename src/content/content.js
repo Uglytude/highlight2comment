@@ -1,10 +1,16 @@
 (() => {
   const SAVE_NOTE_MESSAGE = "H2C_SAVE_NOTE";
   const WIDGET_CLASS = "h2c-root";
-  const BUTTON_WIDTH = 88;
-  const BUTTON_HEIGHT = 32;
+  const BUTTON_WIDTH = 28;
+  const BUTTON_HEIGHT = 28;
+  const BUTTON_GAP = 6;
   const EDITOR_WIDTH = 320;
   const EDITOR_HEIGHT = 190;
+  const COMMENT_ICON_SVG = `
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M4.25 3.75H11.75C12.85 3.75 13.75 4.65 13.75 5.75V9.25C13.75 10.35 12.85 11.25 11.75 11.25H8L4.75 13.25V11.25H4.25C3.15 11.25 2.25 10.35 2.25 9.25V5.75C2.25 4.65 3.15 3.75 4.25 3.75Z" fill="none" stroke="#202124" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
 
   let buttonRoot = null;
   let editorRoot = null;
@@ -54,15 +60,16 @@
     }
 
     const rect = getSelectionRect(selection);
+    const buttonRect = getSelectionEndRect(selection);
 
-    if (!rect) {
+    if (!rect || !buttonRect) {
       hideButton();
       return;
     }
 
     selectedText = text;
     selectedRect = rect;
-    showButton(rect);
+    showButton(buttonRect);
   }
 
   function showButton(rect) {
@@ -71,7 +78,7 @@
       document.documentElement.appendChild(buttonRoot);
     }
 
-    const position = getWidgetPosition(rect, BUTTON_WIDTH, BUTTON_HEIGHT, true);
+    const position = getButtonPosition(rect);
     buttonRoot.style.left = `${position.left}px`;
     buttonRoot.style.top = `${position.top}px`;
     buttonRoot.style.display = "block";
@@ -90,7 +97,9 @@
     const button = document.createElement("button");
     button.className = "h2c-button";
     button.type = "button";
-    button.textContent = "加评论";
+    button.setAttribute("aria-label", "加评论");
+    button.title = "加评论";
+    button.innerHTML = COMMENT_ICON_SVG;
     button.addEventListener("mousedown", (event) => event.preventDefault());
     button.addEventListener("click", openEditor);
 
@@ -318,17 +327,47 @@
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
 
-    if (rect.width > 0 || rect.height > 0) {
+    if (isVisibleRect(rect)) {
       return rect;
     }
 
     for (const candidate of range.getClientRects()) {
-      if (candidate.width > 0 || candidate.height > 0) {
+      if (isVisibleRect(candidate)) {
         return candidate;
       }
     }
 
     return null;
+  }
+
+  function getSelectionEndRect(selection) {
+    const range = selection.getRangeAt(0);
+    let lastRect = null;
+
+    for (const candidate of range.getClientRects()) {
+      if (isVisibleRect(candidate)) {
+        lastRect = candidate;
+      }
+    }
+
+    return lastRect;
+  }
+
+  function isVisibleRect(rect) {
+    return rect.width > 0 || rect.height > 0;
+  }
+
+  function getButtonPosition(rect) {
+    const preferredLeft = rect.right + BUTTON_GAP;
+    const fallbackLeft = rect.left - BUTTON_WIDTH - BUTTON_GAP;
+    const maxLeft = window.innerWidth - BUTTON_WIDTH - 8;
+    const left = preferredLeft <= maxLeft ? preferredLeft : fallbackLeft;
+    const centerTop = rect.top + (rect.height - BUTTON_HEIGHT) / 2;
+
+    return {
+      left: clamp(left, 8, maxLeft),
+      top: clamp(centerTop, 8, window.innerHeight - BUTTON_HEIGHT - 8),
+    };
   }
 
   function getWidgetPosition(rect, width, height, aboveSelection) {

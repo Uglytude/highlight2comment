@@ -71,6 +71,10 @@ button {
   padding: 0 10px;
 }
 
+button[hidden] {
+  display: none;
+}
+
 #connect-button {
   background: #202124;
   border: 1px solid #202124;

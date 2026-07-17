@@ -17,21 +17,22 @@
 .h2c-button {
   all: initial;
   align-items: center;
-  background: #202124;
-  border: 1px solid #202124;
-  border-radius: 6px;
-  box-shadow: 0 6px 16px rgba(32, 33, 36, 0.22);
-  color: #ffffff;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(32, 33, 36, 0.16);
+  color: #202124;
   cursor: pointer;
   display: inline-flex;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  height: 32px;
-  line-height: 1;
-  padding: 0 12px;
-  white-space: nowrap;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+}
+
+.h2c-button svg {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .h2c-card {

@@ -1,5 +1,6 @@
 import { getDateKey, mergeNotesIntoLog, renderNotes } from "../lib/markdown.js";
 import { log } from "../lib/logger.js";
+import { refreshBadge } from "../lib/badge.js";
 import {
   getNoteCount,
   getNotes,
@@ -77,11 +78,13 @@ async function refreshSummary() {
 }
 
 async function handleConnectClick() {
+  const permissionState = await getDirectoryPermissionState();
+
   await connectDirectory({
     action: authorizeDirectory,
     cancelLogAction: "obsidian_authorization_cancelled",
     failureLogAction: "obsidian_authorization_failed",
-    startMessage: "请选择 Obsidian 文件夹。",
+    startMessage: getConnectStartMessage(permissionState),
     successLogAction: "obsidian_directory_authorized",
   });
 }
@@ -179,7 +182,12 @@ async function tryAutoSyncPendingNotes() {
     return;
   }
 
-  if (permissionState === "denied" || permissionState === "prompt") {
+  if (permissionState === "prompt") {
+    setStatus("Obsidian 需要重新授权(文件夹还记得);本地笔记仍然保存在浏览器里。", true);
+    return;
+  }
+
+  if (permissionState === "denied") {
     setStatus("Obsidian 需要重新授权;本地笔记仍然保存在浏览器里。", true);
   }
 }
@@ -209,6 +217,7 @@ async function syncPendingNotes(silent) {
     const fullMarkdown = mergeNotesIntoLog(pendingNotes, existingMarkdown);
     await writeLogText(fullMarkdown);
     await markNotesWritten(pendingNotes.map((note) => note.id));
+    await refreshBadge("obsidian_sync");
 
     await log("obsidian_append_succeeded", {
       count: pendingNotes.length,
@@ -257,6 +266,7 @@ async function updateObsidianConnection(permissionState) {
   const directoryName = await getDirectoryNameForState(permissionState);
 
   setObsidianState(permissionLabel(permissionState));
+  setConnectButtonLabel(permissionState);
   setConnectedDirectory(permissionState, directoryName);
   setBusy(isBusy);
 }
@@ -277,6 +287,10 @@ function setConnectedDirectory(permissionState, directoryName) {
   elements.connectedDirectoryName.textContent = directoryName;
 }
 
+function setConnectButtonLabel(permissionState) {
+  elements.connectButton.textContent = connectButtonLabel(permissionState);
+}
+
 function setStatus(message, isError = false) {
   elements.status.textContent = message;
   elements.status.classList.toggle("error", isError);
@@ -287,7 +301,11 @@ function permissionLabel(permissionState) {
     return "已连接";
   }
 
-  if (permissionState === "prompt" || permissionState === "denied") {
+  if (permissionState === "prompt") {
+    return "需重新授权(文件夹还记得)";
+  }
+
+  if (permissionState === "denied") {
     return "需重新授权";
   }
 
@@ -296,6 +314,22 @@ function permissionLabel(permissionState) {
   }
 
   return "未连接";
+}
+
+function connectButtonLabel(permissionState) {
+  if (permissionState === "prompt" || permissionState === "denied") {
+    return "重新连接并写入 Obsidian";
+  }
+
+  return "连接 Obsidian 文件夹";
+}
+
+function getConnectStartMessage(permissionState) {
+  if (permissionState === "prompt" || permissionState === "denied") {
+    return "正在重新连接 Obsidian 文件夹。";
+  }
+
+  return "请选择 Obsidian 文件夹。";
 }
 
 function getErrorMessage(error) {

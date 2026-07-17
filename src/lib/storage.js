@@ -32,6 +32,11 @@ export async function getPendingNotes() {
   return notes.filter((note) => !writtenIdSet.has(note.id));
 }
 
+export async function getPendingCount() {
+  const pendingNotes = await getPendingNotes();
+  return pendingNotes.length;
+}
+
 export async function markNotesWritten(noteIds) {
   const currentIds = await getWrittenNoteIds();
   const nextIds = new Set(currentIds);

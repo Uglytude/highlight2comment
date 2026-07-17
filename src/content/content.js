@@ -1,5 +1,6 @@
 (() => {
   const SAVE_NOTE_MESSAGE = "H2C_SAVE_NOTE";
+  const DISCONNECTED_MESSAGE = "插件刚更新过,请刷新本页面再试";
   const WIDGET_CLASS = "h2c-root";
   const ACTION_BUTTON_SIZE = 26;
   const ACTION_BAR_PADDING = 3;
@@ -101,15 +102,39 @@
 
     selectedText = text;
     selectedRect = rect;
+
+    if (!isExtensionContextConnected()) {
+      showDisconnectedMessage(buttonRect);
+      return;
+    }
+
     showButton(buttonRect);
   }
 
   function showButton(rect) {
-    if (!buttonRoot) {
-      buttonRoot = createButton();
-      document.documentElement.appendChild(buttonRoot);
+    ensureButtonRoot();
+    setButtonActionsVisible(buttonRoot, true);
+    setButtonStatus("");
+    positionButtonRoot(rect);
+  }
+
+  function showDisconnectedMessage(rect) {
+    ensureButtonRoot();
+    setButtonActionsVisible(buttonRoot, false);
+    setButtonStatus(DISCONNECTED_MESSAGE);
+    positionButtonRoot(rect);
+  }
+
+  function ensureButtonRoot() {
+    if (buttonRoot) {
+      return;
     }
 
+    buttonRoot = createButton();
+    document.documentElement.appendChild(buttonRoot);
+  }
+
+  function positionButtonRoot(rect) {
     const position = getButtonPosition(rect);
     buttonRoot.style.left = `${position.left}px`;
     buttonRoot.style.top = `${position.top}px`;
@@ -169,6 +194,11 @@
       return;
     }
 
+    if (!isExtensionContextConnected()) {
+      setButtonStatus(DISCONNECTED_MESSAGE);
+      return;
+    }
+
     button.disabled = true;
     setButtonStatus("");
 
@@ -188,6 +218,11 @@
     hideButton();
 
     if (!selectedText || !selectedRect) {
+      return;
+    }
+
+    if (!isExtensionContextConnected()) {
+      showDisconnectedMessage(selectedRect);
       return;
     }
 
@@ -292,6 +327,11 @@
       return;
     }
 
+    if (!isExtensionContextConnected()) {
+      setEditorStatus(root, DISCONNECTED_MESSAGE);
+      return;
+    }
+
     saveButton.disabled = true;
     setEditorStatus(root, "");
 
@@ -325,27 +365,36 @@
 
   function sendSaveNote(note) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          type: SAVE_NOTE_MESSAGE,
-          note,
-        },
-        (response) => {
-          const runtimeError = chrome.runtime.lastError;
+      if (!isExtensionContextConnected()) {
+        reject(new Error(DISCONNECTED_MESSAGE));
+        return;
+      }
 
-          if (runtimeError) {
-            reject(new Error(runtimeError.message));
-            return;
-          }
+      try {
+        chrome.runtime.sendMessage(
+          {
+            type: SAVE_NOTE_MESSAGE,
+            note,
+          },
+          (response) => {
+            const runtimeError = getRuntimeLastError();
 
-          if (!response || !response.ok) {
-            reject(new Error(response ? response.error : "保存失败"));
-            return;
-          }
+            if (runtimeError) {
+              reject(new Error(getSaveErrorMessage(runtimeError)));
+              return;
+            }
 
-          resolve(response);
-        },
-      );
+            if (!response || !response.ok) {
+              reject(new Error(getSaveErrorMessage(response ? response.error : "保存失败")));
+              return;
+            }
+
+            resolve(response);
+          },
+        );
+      } catch (error) {
+        reject(new Error(getSaveErrorMessage(error)));
+      }
     });
   }
 
@@ -477,12 +526,22 @@
     const status = root.querySelector(".h2c-button-status");
     const buttons = root.querySelectorAll(".h2c-action-button");
 
+    setButtonActionsVisible(root, true);
+
     if (status) {
       status.textContent = "";
     }
 
     for (const button of buttons) {
       button.disabled = false;
+    }
+  }
+
+  function setButtonActionsVisible(root, visible) {
+    const actionBar = root.querySelector(".h2c-action-bar");
+
+    if (actionBar) {
+      actionBar.style.display = visible ? "" : "none";
     }
   }
 
@@ -574,5 +633,43 @@
       target.isContentEditable ||
       Boolean(target.closest('[contenteditable="true"], [contenteditable="plaintext-only"]'))
     );
+  }
+
+  function getRuntimeLastError() {
+    try {
+      if (typeof chrome === "undefined" || !chrome.runtime) {
+        return { message: DISCONNECTED_MESSAGE };
+      }
+
+      return chrome.runtime.lastError;
+    } catch {
+      return { message: DISCONNECTED_MESSAGE };
+    }
+  }
+
+  function getSaveErrorMessage(error) {
+    const message = error && error.message ? error.message : String(error);
+
+    if (isExtensionContextInvalidMessage(message) || !isExtensionContextConnected()) {
+      return DISCONNECTED_MESSAGE;
+    }
+
+    return message;
+  }
+
+  function isExtensionContextInvalidMessage(message) {
+    return String(message || "").includes("Extension context invalidated");
+  }
+
+  function isExtensionContextConnected() {
+    try {
+      return (
+        typeof chrome !== "undefined" &&
+        Boolean(chrome.runtime && chrome.runtime.id) &&
+        typeof chrome.runtime.sendMessage === "function"
+      );
+    } catch {
+      return false;
+    }
   }
 })();

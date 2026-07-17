@@ -24,16 +24,21 @@ export async function authorizeDirectory() {
     return restoredDirectoryHandle;
   }
 
-  const directoryHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-  const permission = await requestWritePermission(directoryHandle);
+  return pickAndSaveDirectory();
+}
 
-  if (permission !== "granted") {
-    throw new Error("没有获得 Obsidian 文件夹写入权限");
+export async function reauthorizeDirectory() {
+  assertSupported();
+  return pickAndSaveDirectory();
+}
+
+export async function getConnectedDirectoryName() {
+  if (!isFileSystemAccessSupported()) {
+    return "";
   }
 
-  await saveDirectoryHandle(directoryHandle);
-  await ensureLogFile(directoryHandle);
-  return directoryHandle;
+  const directoryHandle = await getDirectoryHandle();
+  return directoryHandle ? directoryHandle.name : "";
 }
 
 export async function getDirectoryPermissionState() {
@@ -77,6 +82,19 @@ export async function appendToLog(markdownText) {
   } finally {
     await writable.close();
   }
+}
+
+async function pickAndSaveDirectory() {
+  const directoryHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+  const permission = await requestWritePermission(directoryHandle);
+
+  if (permission !== "granted") {
+    throw new Error("没有获得 Obsidian 文件夹写入权限");
+  }
+
+  await saveDirectoryHandle(directoryHandle);
+  await ensureLogFile(directoryHandle);
+  return directoryHandle;
 }
 
 async function requireWritableDirectory() {

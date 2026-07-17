@@ -10,14 +10,17 @@ import {
 import {
   appendToLog,
   authorizeDirectory,
+  getConnectedDirectoryName,
   getDirectoryPermissionState,
   isFileSystemAccessSupported,
   LOG_FILE_NAME,
   readLogText,
+  reauthorizeDirectory,
 } from "../lib/obsidian-writer.js";
 
 const elements = {};
 let syncInFlight = false;
+let isBusy = false;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -40,11 +43,15 @@ function bindElements() {
   elements.connectButton = document.getElementById("connect-button");
   elements.downloadButton = document.getElementById("download-button");
   elements.status = document.getElementById("status");
+  elements.connectedDirectory = document.getElementById("connected-directory");
+  elements.connectedDirectoryName = document.getElementById("connected-directory-name");
+  elements.reauthorizeLink = document.getElementById("reauthorize-link");
 }
 
 function bindEvents() {
   elements.connectButton.addEventListener("click", handleConnectClick);
   elements.downloadButton.addEventListener("click", handleDownloadClick);
+  elements.reauthorizeLink.addEventListener("click", handleReauthorizeClick);
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "local") {
@@ -66,22 +73,56 @@ async function refreshSummary() {
   ]);
 
   elements.noteCount.textContent = String(count);
-  setObsidianState(permissionLabel(permissionState));
+  await updateObsidianConnection(permissionState);
 }
 
 async function handleConnectClick() {
-  setStatus("请选择 Obsidian 文件夹。");
+  await connectDirectory({
+    action: authorizeDirectory,
+    cancelLogAction: "obsidian_authorization_cancelled",
+    failureLogAction: "obsidian_authorization_failed",
+    startMessage: "请选择 Obsidian 文件夹。",
+    successLogAction: "obsidian_directory_authorized",
+  });
+}
+
+async function handleReauthorizeClick(event) {
+  event.preventDefault();
+
+  if (isBusy) {
+    return;
+  }
+
+  await connectDirectory({
+    action: reauthorizeDirectory,
+    cancelLogAction: "obsidian_reauthorization_cancelled",
+    failureLogAction: "obsidian_reauthorization_failed",
+    startMessage: "请选择新的 Obsidian 文件夹。",
+    successLogAction: "obsidian_directory_reauthorized",
+  });
+}
+
+async function connectDirectory(options) {
+  setStatus(options.startMessage);
   setBusy(true);
 
   try {
-    await authorizeDirectory();
-    await log("obsidian_directory_authorized", {
+    await options.action();
+    await log(options.successLogAction, {
       fileName: LOG_FILE_NAME,
     });
     setStatus("已连接,正在写入待追加笔记。");
     await syncPendingNotes(false);
   } catch (error) {
-    await log("obsidian_authorization_failed", {
+    if (isAbortError(error)) {
+      await log(options.cancelLogAction, {
+        fileName: LOG_FILE_NAME,
+      });
+      setStatus(getErrorMessage(error));
+      return;
+    }
+
+    await log(options.failureLogAction, {
       message: getErrorMessage(error),
     });
     setStatus(getErrorMessage(error), true);
@@ -122,12 +163,16 @@ async function handleDownloadClick() {
 }
 
 async function tryAutoSyncPendingNotes() {
-  if (!isFileSystemAccessSupported() || syncInFlight) {
+  if (syncInFlight) {
     return;
   }
 
   const permissionState = await getDirectoryPermissionState();
-  setObsidianState(permissionLabel(permissionState));
+  await updateObsidianConnection(permissionState);
+
+  if (permissionState === "unsupported") {
+    return;
+  }
 
   if (permissionState === "granted") {
     await syncPendingNotes(true);
@@ -196,13 +241,40 @@ function downloadMarkdown(markdown, filename) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function setBusy(isBusy) {
+function setBusy(nextBusy) {
+  isBusy = nextBusy;
   elements.connectButton.disabled = isBusy || !isFileSystemAccessSupported();
   elements.downloadButton.disabled = isBusy;
+  elements.reauthorizeLink.classList.toggle("is-disabled", isBusy);
+  elements.reauthorizeLink.setAttribute("aria-disabled", String(isBusy));
 }
 
 function setObsidianState(label) {
   elements.obsidianState.textContent = label;
+}
+
+async function updateObsidianConnection(permissionState) {
+  const directoryName = await getDirectoryNameForState(permissionState);
+
+  setObsidianState(permissionLabel(permissionState));
+  setConnectedDirectory(permissionState, directoryName);
+  setBusy(isBusy);
+}
+
+async function getDirectoryNameForState(permissionState) {
+  if (permissionState !== "granted") {
+    return "";
+  }
+
+  return getConnectedDirectoryName();
+}
+
+function setConnectedDirectory(permissionState, directoryName) {
+  const isConnected = permissionState === "granted";
+
+  elements.connectButton.hidden = isConnected;
+  elements.connectedDirectory.hidden = !isConnected;
+  elements.connectedDirectoryName.textContent = directoryName;
 }
 
 function setStatus(message, isError = false) {
@@ -232,4 +304,8 @@ function getErrorMessage(error) {
   }
 
   return error && error.message ? error.message : String(error);
+}
+
+function isAbortError(error) {
+  return error && error.name === "AbortError";
 }

@@ -99,3 +99,27 @@ button:disabled {
 .status.error {
   color: #b3261e;
 }
+
+.connected-directory {
+  color: #80868b;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 9px 0 0;
+  text-align: center;
+}
+
+.connected-directory[hidden] {
+  display: none;
+}
+
+.connected-directory a {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.connected-directory a.is-disabled {
+  cursor: default;
+  opacity: 0.65;
+}

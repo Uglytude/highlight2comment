@@ -10,3 +10,8 @@ build/
 # 日志 / 临时
 *.log
 .tmp/
+
+# 本机工作文档(不进仓库,SOP 铁律)
+AGENTS.md
+CLAUDE.md
+BUILD_SPEC.md

@@ -1,4 +1,4 @@
-import { getDateKey, renderNotes, renderNotesForAppend } from "../lib/markdown.js";
+import { getDateKey, mergeNotesIntoLog, renderNotes } from "../lib/markdown.js";
 import { log } from "../lib/logger.js";
 import {
   getNoteCount,
@@ -8,7 +8,6 @@ import {
   NOTES_KEY,
 } from "../lib/storage.js";
 import {
-  appendToLog,
   authorizeDirectory,
   getConnectedDirectoryName,
   getDirectoryPermissionState,
@@ -16,6 +15,7 @@ import {
   LOG_FILE_NAME,
   readLogText,
   reauthorizeDirectory,
+  writeLogText,
 } from "../lib/obsidian-writer.js";
 
 const elements = {};
@@ -206,8 +206,8 @@ async function syncPendingNotes(silent) {
     }
 
     const existingMarkdown = await readLogText();
-    const appendMarkdown = renderNotesForAppend(pendingNotes, existingMarkdown);
-    await appendToLog(appendMarkdown);
+    const fullMarkdown = mergeNotesIntoLog(pendingNotes, existingMarkdown);
+    await writeLogText(fullMarkdown);
     await markNotesWritten(pendingNotes.map((note) => note.id));
 
     await log("obsidian_append_succeeded", {

@@ -1,4 +1,6 @@
 const DATE_HEADING_PATTERN = /^##\s+(\d{6})\s*$/gm;
+const ENTRY_NUMBER_PATTERN = /^\*\*(\d+)\.\*\*\s*$/gm;
+const FOOTNOTE_DEFINITION_LINE_PATTERN = /^\[\^[^\]]+\]:/;
 
 export function getDateKey(date = new Date()) {
   const year = String(date.getFullYear()).slice(-2);
@@ -16,46 +18,62 @@ export function renderNotes(notes) {
   return sections.length > 0 ? `${sections.join("\n\n")}\n` : "";
 }
 
-export function renderNotesForAppend(notes, existingMarkdown = "") {
+export function mergeNotesIntoLog(notes, existingMarkdown = "") {
+  const logText = String(existingMarkdown || "");
   const groupedNotes = groupNotesByDate(sortNotes(notes));
 
   if (groupedNotes.length === 0) {
-    return "";
+    return logText;
   }
 
-  if (!existingMarkdown.trim()) {
+  if (!logText.trim()) {
     return renderNotes(notes);
   }
 
-  const lastDateKey = findLastDateKey(existingMarkdown);
-  const fragments = groupedNotes.map(([dateKey, dayNotes], index) => {
-    if (index === 0 && dateKey === lastDateKey) {
-      return dayNotes.map(renderNoteEntry).join("\n\n");
+  const lastSection = findLastDaySection(logText);
+
+  if (!lastSection) {
+    return appendRenderedSections(logText, groupedNotes);
+  }
+
+  let mergedMarkdown = logText;
+  const groupsToAppend = [];
+
+  for (const [dateKey, dayNotes] of groupedNotes) {
+    if (dateKey === lastSection.dateKey) {
+      mergedMarkdown = insertNotesIntoLastDaySection(
+        logText,
+        lastSection,
+        dayNotes,
+      );
+      continue;
     }
 
-    return renderDaySection(dateKey, dayNotes);
-  });
+    groupsToAppend.push([dateKey, dayNotes]);
+  }
 
-  return `${appendSeparator(existingMarkdown)}${fragments.join("\n\n")}\n`;
+  if (groupsToAppend.length === 0) {
+    return mergedMarkdown;
+  }
+
+  return appendRenderedSections(mergedMarkdown, groupsToAppend);
 }
 
 export function renderDaySection(dateKey, notes) {
-  const entries = notes.map(renderNoteEntry).join("\n\n");
-  return `## ${dateKey}\n\n${entries}`;
+  const entries = renderNoteEntries(notes, 1);
+  const footnotes = renderFootnoteDefinitions(notes);
+  return `## ${dateKey}\n\n${entries}\n\n${footnotes}`;
 }
 
-export function renderNoteEntry(note) {
-  const quote = renderQuotedOriginal(note.text);
+export function renderNoteEntry(note, entryNumber = 1) {
+  const quote = renderQuotedOriginal(note.text, getFootnoteLabel(note));
   const comment = normalizeText(note.comment);
-  const infoLine = renderInfoLine(note);
-  const urlLine = `> ${normalizeText(note.url)}`;
-  const sourceBlock = `${infoLine}\n${urlLine}`;
 
   if (!comment) {
-    return `${quote}\n\n${sourceBlock}`;
+    return `**${entryNumber}.**\n\n${quote}`;
   }
 
-  return `${quote}\n\n我的评论:${comment}\n\n${sourceBlock}`;
+  return `**${entryNumber}.**\n\n${quote}\n\n评:${comment}`;
 }
 
 function groupNotesByDate(notes) {
@@ -84,15 +102,31 @@ function sortNotes(notes) {
   });
 }
 
-function renderQuotedOriginal(text) {
-  const quotedText = `"${normalizeText(text)}"`;
-  return quotedText
-    .split("\n")
+function renderNoteEntries(notes, startNumber) {
+  return notes
+    .map((note, index) => renderNoteEntry(note, startNumber + index))
+    .join("\n\n");
+}
+
+function renderFootnoteDefinitions(notes) {
+  return notes.map(renderFootnoteDefinition).join("\n");
+}
+
+function renderQuotedOriginal(text, footnoteLabel) {
+  const lines = normalizeText(text).split("\n");
+  const lastIndex = lines.length - 1;
+
+  return lines
+    .map((line, index) => {
+      const openingQuote = index === 0 ? "\"" : "";
+      const closingQuote = index === lastIndex ? `"[^${footnoteLabel}]` : "";
+      return `${openingQuote}${line}${closingQuote}`;
+    })
     .map((line) => `> ${line}`)
     .join("\n");
 }
 
-function renderInfoLine(note) {
+function renderFootnoteDefinition(note) {
   const parts = [getSiteName(note.url)];
   const author = normalizeText(note.author);
 
@@ -101,7 +135,134 @@ function renderInfoLine(note) {
   }
 
   parts.push(formatTime(note.ts));
-  return `> [!info]- 来源:${parts.join(" · ")}`;
+  parts.push(normalizeText(note.url));
+  return `[^${getFootnoteLabel(note)}]: ${parts.join(" · ")}`;
+}
+
+function getFootnoteLabel(note) {
+  const label = normalizeText(note.id);
+
+  if (!label) {
+    throw new Error("note.id is required for markdown footnotes");
+  }
+
+  return label;
+}
+
+function appendRenderedSections(markdown, groupedNotes) {
+  const sections = groupedNotes.map(([dateKey, dayNotes]) => {
+    return renderDaySection(dateKey, dayNotes);
+  });
+
+  return `${markdown}${appendSeparator(markdown)}${sections.join("\n\n")}\n`;
+}
+
+function insertNotesIntoLastDaySection(markdown, section, notes) {
+  const nextNumber = findMaxEntryNumber(section.text) + 1;
+  const newEntries = renderNoteEntries(notes, nextNumber);
+  const newFootnotes = renderFootnoteDefinitions(notes);
+  const footnoteBlock = findTrailingFootnoteBlock(section.text);
+
+  if (!footnoteBlock) {
+    const insertion = `${appendSeparator(markdown)}${newEntries}\n\n${newFootnotes}`;
+    return `${markdown.slice(0, section.end)}${insertion}${markdown.slice(section.end)}`;
+  }
+
+  const footnoteStart = section.start + footnoteBlock.start;
+  const footnoteEnd = section.start + footnoteBlock.end;
+  const entrySeparator = appendSeparator(markdown.slice(0, footnoteStart));
+  const entryInsertion = `${entrySeparator}${newEntries}\n\n`;
+  const footnoteInsertion = `\n${newFootnotes}`;
+
+  return (
+    markdown.slice(0, footnoteStart) +
+    entryInsertion +
+    markdown.slice(footnoteStart, footnoteEnd) +
+    footnoteInsertion +
+    markdown.slice(footnoteEnd)
+  );
+}
+
+function findTrailingFootnoteBlock(sectionText) {
+  const lines = getLineRanges(sectionText);
+  let lastContentIndex = lines.length - 1;
+
+  while (lastContentIndex >= 0 && lines[lastContentIndex].text.trim() === "") {
+    lastContentIndex -= 1;
+  }
+
+  if (
+    lastContentIndex < 0 ||
+    !FOOTNOTE_DEFINITION_LINE_PATTERN.test(lines[lastContentIndex].text)
+  ) {
+    return null;
+  }
+
+  let firstFootnoteIndex = lastContentIndex;
+
+  while (
+    firstFootnoteIndex > 0 &&
+    FOOTNOTE_DEFINITION_LINE_PATTERN.test(lines[firstFootnoteIndex - 1].text)
+  ) {
+    firstFootnoteIndex -= 1;
+  }
+
+  return {
+    start: lines[firstFootnoteIndex].start,
+    end: lines[lastContentIndex].end,
+  };
+}
+
+function getLineRanges(text) {
+  const lines = [];
+  let start = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] !== "\n") {
+      continue;
+    }
+
+    lines.push({
+      text: text.slice(start, index),
+      start,
+      end: index,
+    });
+    start = index + 1;
+  }
+
+  lines.push({
+    text: text.slice(start),
+    start,
+    end: text.length,
+  });
+  return lines;
+}
+
+function findMaxEntryNumber(markdown) {
+  let maxNumber = 0;
+
+  for (const match of markdown.matchAll(ENTRY_NUMBER_PATTERN)) {
+    maxNumber = Math.max(maxNumber, Number(match[1]));
+  }
+
+  return maxNumber;
+}
+
+function findLastDaySection(markdown) {
+  const matches = Array.from(markdown.matchAll(DATE_HEADING_PATTERN));
+
+  if (matches.length === 0) {
+    return null;
+  }
+
+  const match = matches[matches.length - 1];
+
+  return {
+    dateKey: match[1],
+    start: match.index,
+    end: markdown.length,
+    text: markdown.slice(match.index),
+  };
 }
 
 function getSiteName(url) {
@@ -126,19 +287,6 @@ function formatTime(ts) {
 
 function normalizeText(value) {
   return String(value || "").trim();
-}
-
-function findLastDateKey(markdown) {
-  let lastMatch = null;
-  let match = DATE_HEADING_PATTERN.exec(markdown);
-
-  while (match) {
-    lastMatch = match[1];
-    match = DATE_HEADING_PATTERN.exec(markdown);
-  }
-
-  DATE_HEADING_PATTERN.lastIndex = 0;
-  return lastMatch;
 }
 
 function appendSeparator(markdown) {

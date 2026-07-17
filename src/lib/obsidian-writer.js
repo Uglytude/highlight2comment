@@ -64,23 +64,31 @@ export async function readLogText() {
   return file.text();
 }
 
-export async function appendToLog(markdownText) {
-  if (!String(markdownText || "").trim()) {
-    return;
-  }
-
+export async function writeLogText(fullText) {
   const directoryHandle = await requireWritableDirectory();
   const fileHandle = await directoryHandle.getFileHandle(LOG_FILE_NAME, {
     create: true,
   });
-  const file = await fileHandle.getFile();
-  const writable = await fileHandle.createWritable({ keepExistingData: true });
+  const writable = await fileHandle.createWritable();
 
   try {
-    await writable.seek(file.size);
-    await writable.write(markdownText);
-  } finally {
+    await writable.write(String(fullText || ""));
     await writable.close();
+  } catch (error) {
+    await abortWritable(writable);
+    throw error;
+  }
+}
+
+async function abortWritable(writable) {
+  if (typeof writable.abort !== "function") {
+    return;
+  }
+
+  try {
+    await writable.abort();
+  } catch {
+    // Preserve the original write/close error.
   }
 }
 

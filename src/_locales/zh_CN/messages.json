@@ -20,11 +20,11 @@
     "description": "Obsidian connection state when no folder is saved."
   },
   "obsidianStateReauthorizationRemembered": {
-    "message": "需重新授权(文件夹还记得)",
+    "message": "需重新连接",
     "description": "Obsidian connection state when the saved folder needs permission again."
   },
   "obsidianStateReauthorizationRequired": {
-    "message": "需重新授权",
+    "message": "需重新连接",
     "description": "Obsidian connection state when permission is denied."
   },
   "obsidianStateUnsupported": {
@@ -32,11 +32,11 @@
     "description": "Obsidian connection state when the browser lacks File System Access support."
   },
   "connectObsidianFolderButton": {
-    "message": "连接 Obsidian 文件夹",
+    "message": "连接文件夹",
     "description": "Button label for first-time Obsidian folder authorization."
   },
   "reconnectAndWriteObsidianButton": {
-    "message": "重新连接并写入 Obsidian",
+    "message": "重新连接",
     "description": "Button label when Obsidian permission must be renewed."
   },
   "downloadAllButton": {
@@ -44,7 +44,7 @@
     "description": "Button label for exporting all local notes."
   },
   "connectedDirectorySummary": {
-    "message": "笔记自动写入 $NAME$ ·",
+    "message": "自动写入 $NAME$ ·",
     "description": "Small note shown when an Obsidian folder is connected.",
     "placeholders": {
       "name": {
@@ -58,15 +58,15 @@
     "description": "Link label for choosing a different Obsidian folder."
   },
   "chooseNewObsidianFolderStatus": {
-    "message": "请选择新的 Obsidian 文件夹。",
+    "message": "请选择新文件夹。",
     "description": "Status shown before reauthorizing a new Obsidian folder."
   },
   "connectedWritingPendingStatus": {
-    "message": "已连接,正在写入待追加笔记。",
+    "message": "已连接,同步中…",
     "description": "Status shown after connecting Obsidian before pending notes are appended."
   },
   "noLocalNotesStatus": {
-    "message": "还没有本地笔记。",
+    "message": "还没有笔记。",
     "description": "Status shown when the user exports before saving any notes."
   },
   "exportDownloadedStatus": {
@@ -80,23 +80,23 @@
     }
   },
   "reauthorizationRememberedStatus": {
-    "message": "Obsidian 需要重新授权(文件夹还记得);本地笔记仍然保存在浏览器里。",
+    "message": "点「重新连接」继续写入;笔记安全存在浏览器里。",
     "description": "Status shown when a remembered folder needs permission again."
   },
   "reauthorizationRequiredStatus": {
-    "message": "Obsidian 需要重新授权;本地笔记仍然保存在浏览器里。",
+    "message": "点「重新连接」继续写入;笔记安全存在浏览器里。",
     "description": "Status shown when Obsidian permission was denied."
   },
   "noPendingNotesStatus": {
-    "message": "没有待追加笔记。",
+    "message": "没有待同步笔记。",
     "description": "Status shown when all local notes are already written to Obsidian."
   },
   "writingObsidianStatus": {
-    "message": "正在写入 Obsidian。",
+    "message": "同步中…",
     "description": "Status shown while appending pending notes to Obsidian."
   },
   "appendedToLogStatus": {
-    "message": "已追加 $COUNT$ 条到 $FILE$。",
+    "message": "已写入 $COUNT$ 条。",
     "description": "Status shown after pending notes are appended to the Obsidian log.",
     "placeholders": {
       "count": {
@@ -110,15 +110,15 @@
     }
   },
   "reconnectingObsidianFolderStatus": {
-    "message": "正在重新连接 Obsidian 文件夹。",
+    "message": "重新连接中…",
     "description": "Status shown when reconnecting a remembered or denied Obsidian folder."
   },
   "chooseObsidianFolderStatus": {
-    "message": "请选择 Obsidian 文件夹。",
+    "message": "请选择文件夹。",
     "description": "Status shown before first-time Obsidian folder authorization."
   },
   "folderSelectionCancelledStatus": {
-    "message": "已取消选择文件夹。",
+    "message": "已取消。",
     "description": "Status shown when the user cancels the folder picker."
   },
   "unknownErrorStatus": {
@@ -126,7 +126,7 @@
     "description": "Fallback status for unexpected errors without a message."
   },
   "extensionDisconnectedRefresh": {
-    "message": "插件刚更新过,请刷新本页面再试",
+    "message": "插件刚更新过,请刷新本页面再试。",
     "description": "Content script message shown when the injected page script lost connection to the extension."
   },
   "selectionToolbarAria": {

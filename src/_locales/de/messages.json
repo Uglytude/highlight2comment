@@ -20,11 +20,11 @@
     "description": "Obsidian connection state when no folder is saved."
   },
   "obsidianStateReauthorizationRemembered": {
-    "message": "Neu autorisieren (Ordner gemerkt)",
+    "message": "Neu verbinden nötig",
     "description": "Obsidian connection state when the saved folder needs permission again."
   },
   "obsidianStateReauthorizationRequired": {
-    "message": "Neu autorisieren",
+    "message": "Neu verbinden nötig",
     "description": "Obsidian connection state when permission is denied."
   },
   "obsidianStateUnsupported": {
@@ -32,11 +32,11 @@
     "description": "Obsidian connection state when the browser lacks File System Access support."
   },
   "connectObsidianFolderButton": {
-    "message": "Obsidian-Ordner verbinden",
+    "message": "Ordner verbinden",
     "description": "Button label for first-time Obsidian folder authorization."
   },
   "reconnectAndWriteObsidianButton": {
-    "message": "Neu verbinden und in Obsidian schreiben",
+    "message": "Neu verbinden",
     "description": "Button label when Obsidian permission must be renewed."
   },
   "downloadAllButton": {
@@ -44,7 +44,7 @@
     "description": "Button label for exporting all local notes."
   },
   "connectedDirectorySummary": {
-    "message": "Notizen werden automatisch in $NAME$ geschrieben ·",
+    "message": "Speichert in $NAME$ ·",
     "description": "Small note shown when an Obsidian folder is connected.",
     "placeholders": {
       "name": {
@@ -58,15 +58,15 @@
     "description": "Link label for choosing a different Obsidian folder."
   },
   "chooseNewObsidianFolderStatus": {
-    "message": "Wähle einen neuen Obsidian-Ordner.",
+    "message": "Neuen Ordner wählen.",
     "description": "Status shown before reauthorizing a new Obsidian folder."
   },
   "connectedWritingPendingStatus": {
-    "message": "Verbunden. Ausstehende Notizen werden geschrieben.",
+    "message": "Verbunden. Synchronisiere…",
     "description": "Status shown after connecting Obsidian before pending notes are appended."
   },
   "noLocalNotesStatus": {
-    "message": "Noch keine lokalen Notizen.",
+    "message": "Noch keine Notizen.",
     "description": "Status shown when the user exports before saving any notes."
   },
   "exportDownloadedStatus": {
@@ -80,23 +80,23 @@
     }
   },
   "reauthorizationRememberedStatus": {
-    "message": "Obsidian muss neu autorisiert werden (Ordner gemerkt). Lokale Notizen bleiben im Browser gespeichert.",
+    "message": "Klicke „Neu verbinden“, um weiterzuschreiben. Notizen bleiben im Browser gesichert.",
     "description": "Status shown when a remembered folder needs permission again."
   },
   "reauthorizationRequiredStatus": {
-    "message": "Obsidian muss neu autorisiert werden. Lokale Notizen bleiben im Browser gespeichert.",
+    "message": "Klicke „Neu verbinden“, um weiterzuschreiben. Notizen bleiben im Browser gesichert.",
     "description": "Status shown when Obsidian permission was denied."
   },
   "noPendingNotesStatus": {
-    "message": "Keine ausstehenden Notizen zum Anhängen.",
+    "message": "Nichts zu synchronisieren.",
     "description": "Status shown when all local notes are already written to Obsidian."
   },
   "writingObsidianStatus": {
-    "message": "Schreibe in Obsidian.",
+    "message": "Synchronisiere…",
     "description": "Status shown while appending pending notes to Obsidian."
   },
   "appendedToLogStatus": {
-    "message": "$COUNT$ Notizen an $FILE$ angehängt.",
+    "message": "$COUNT$ Notizen gespeichert.",
     "description": "Status shown after pending notes are appended to the Obsidian log.",
     "placeholders": {
       "count": {
@@ -110,15 +110,15 @@
     }
   },
   "reconnectingObsidianFolderStatus": {
-    "message": "Obsidian-Ordner wird neu verbunden.",
+    "message": "Verbinde neu…",
     "description": "Status shown when reconnecting a remembered or denied Obsidian folder."
   },
   "chooseObsidianFolderStatus": {
-    "message": "Wähle einen Obsidian-Ordner.",
+    "message": "Ordner wählen.",
     "description": "Status shown before first-time Obsidian folder authorization."
   },
   "folderSelectionCancelledStatus": {
-    "message": "Ordnerauswahl abgebrochen.",
+    "message": "Abgebrochen.",
     "description": "Status shown when the user cancels the folder picker."
   },
   "unknownErrorStatus": {
@@ -126,7 +126,7 @@
     "description": "Fallback status for unexpected errors without a message."
   },
   "extensionDisconnectedRefresh": {
-    "message": "Die Erweiterung wurde gerade aktualisiert. Lade diese Seite neu und versuche es erneut.",
+    "message": "Erweiterung aktualisiert. Bitte Seite neu laden.",
     "description": "Content script message shown when the injected page script lost connection to the extension."
   },
   "selectionToolbarAria": {
@@ -134,7 +134,7 @@
     "description": "ARIA label for the small selection action toolbar."
   },
   "highlightOnlyAction": {
-    "message": "Nur Markierung speichern",
+    "message": "Nur markieren",
     "description": "Tooltip and ARIA label for saving selected text without a comment."
   },
   "addCommentAction": {

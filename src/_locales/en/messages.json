@@ -20,11 +20,11 @@
     "description": "Obsidian connection state when no folder is saved."
   },
   "obsidianStateReauthorizationRemembered": {
-    "message": "Reauthorization needed (folder remembered)",
+    "message": "Reconnect needed",
     "description": "Obsidian connection state when the saved folder needs permission again."
   },
   "obsidianStateReauthorizationRequired": {
-    "message": "Reauthorization needed",
+    "message": "Reconnect needed",
     "description": "Obsidian connection state when permission is denied."
   },
   "obsidianStateUnsupported": {
@@ -32,11 +32,11 @@
     "description": "Obsidian connection state when the browser lacks File System Access support."
   },
   "connectObsidianFolderButton": {
-    "message": "Connect Obsidian folder",
+    "message": "Connect folder",
     "description": "Button label for first-time Obsidian folder authorization."
   },
   "reconnectAndWriteObsidianButton": {
-    "message": "Reconnect and write to Obsidian",
+    "message": "Reconnect",
     "description": "Button label when Obsidian permission must be renewed."
   },
   "downloadAllButton": {
@@ -44,7 +44,7 @@
     "description": "Button label for exporting all local notes."
   },
   "connectedDirectorySummary": {
-    "message": "Notes write automatically to $NAME$ ·",
+    "message": "Auto-saving to $NAME$ ·",
     "description": "Small note shown when an Obsidian folder is connected.",
     "placeholders": {
       "name": {
@@ -58,15 +58,15 @@
     "description": "Link label for choosing a different Obsidian folder."
   },
   "chooseNewObsidianFolderStatus": {
-    "message": "Choose a new Obsidian folder.",
+    "message": "Choose a new folder.",
     "description": "Status shown before reauthorizing a new Obsidian folder."
   },
   "connectedWritingPendingStatus": {
-    "message": "Connected. Writing pending notes.",
+    "message": "Connected. Syncing…",
     "description": "Status shown after connecting Obsidian before pending notes are appended."
   },
   "noLocalNotesStatus": {
-    "message": "No local notes yet.",
+    "message": "No notes yet.",
     "description": "Status shown when the user exports before saving any notes."
   },
   "exportDownloadedStatus": {
@@ -80,23 +80,23 @@
     }
   },
   "reauthorizationRememberedStatus": {
-    "message": "Obsidian needs reauthorization (folder remembered). Local notes are still saved in the browser.",
+    "message": "Click Reconnect to keep writing. Your notes are safe in the browser.",
     "description": "Status shown when a remembered folder needs permission again."
   },
   "reauthorizationRequiredStatus": {
-    "message": "Obsidian needs reauthorization. Local notes are still saved in the browser.",
+    "message": "Click Reconnect to keep writing. Your notes are safe in the browser.",
     "description": "Status shown when Obsidian permission was denied."
   },
   "noPendingNotesStatus": {
-    "message": "No pending notes to append.",
+    "message": "Nothing to sync.",
     "description": "Status shown when all local notes are already written to Obsidian."
   },
   "writingObsidianStatus": {
-    "message": "Writing to Obsidian.",
+    "message": "Syncing…",
     "description": "Status shown while appending pending notes to Obsidian."
   },
   "appendedToLogStatus": {
-    "message": "Appended $COUNT$ notes to $FILE$.",
+    "message": "Added $COUNT$ notes to log.",
     "description": "Status shown after pending notes are appended to the Obsidian log.",
     "placeholders": {
       "count": {
@@ -110,15 +110,15 @@
     }
   },
   "reconnectingObsidianFolderStatus": {
-    "message": "Reconnecting the Obsidian folder.",
+    "message": "Reconnecting…",
     "description": "Status shown when reconnecting a remembered or denied Obsidian folder."
   },
   "chooseObsidianFolderStatus": {
-    "message": "Choose an Obsidian folder.",
+    "message": "Choose a folder.",
     "description": "Status shown before first-time Obsidian folder authorization."
   },
   "folderSelectionCancelledStatus": {
-    "message": "Folder selection canceled.",
+    "message": "Canceled.",
     "description": "Status shown when the user cancels the folder picker."
   },
   "unknownErrorStatus": {
@@ -126,7 +126,7 @@
     "description": "Fallback status for unexpected errors without a message."
   },
   "extensionDisconnectedRefresh": {
-    "message": "The extension was just updated. Refresh this page and try again.",
+    "message": "Extension updated. Refresh this page.",
     "description": "Content script message shown when the injected page script lost connection to the extension."
   },
   "selectionToolbarAria": {
@@ -134,7 +134,7 @@
     "description": "ARIA label for the small selection action toolbar."
   },
   "highlightOnlyAction": {
-    "message": "Save highlight only",
+    "message": "Save highlight",
     "description": "Tooltip and ARIA label for saving selected text without a comment."
   },
   "addCommentAction": {

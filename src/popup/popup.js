@@ -1,7 +1,12 @@
 import { getDateKey, renderNotes } from "../lib/markdown.js";
 import { log } from "../lib/logger.js";
 import { getMessage as t } from "../lib/i18n.js";
-import { getNoteCount, getNotes, NOTES_KEY } from "../lib/storage.js";
+import {
+  getNoteCount,
+  getNotes,
+  getPendingNotes,
+  NOTES_KEY,
+} from "../lib/storage.js";
 import {
   authorizeDirectory,
   getConnectedDirectoryName,
@@ -13,6 +18,7 @@ import {
 
 const SYNC_MESSAGE = "H2C_SYNC";
 const SERVICE_WORKER_TARGET = "service-worker";
+const NOTE_PREVIEW_LIMIT = 90;
 
 const elements = {};
 let syncInFlight = false;
@@ -35,7 +41,11 @@ async function init() {
 }
 
 function bindElements() {
+  elements.noteCountToggle = document.getElementById("note-count-toggle");
   elements.noteCount = document.getElementById("note-count");
+  elements.notesPanel = document.getElementById("notes-panel");
+  elements.notesPanelClose = document.getElementById("notes-panel-close");
+  elements.notesList = document.getElementById("notes-list");
   elements.obsidianState = document.getElementById("obsidian-state");
   elements.connectButton = document.getElementById("connect-button");
   elements.downloadButton = document.getElementById("download-button");
@@ -51,24 +61,169 @@ function applyStaticMessages() {
   for (const element of document.querySelectorAll("[data-i18n]")) {
     element.textContent = t(element.dataset.i18n);
   }
+
+  for (const element of document.querySelectorAll("[data-i18n-aria-label]")) {
+    element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+  }
 }
 
 function bindEvents() {
+  elements.noteCountToggle.addEventListener("click", toggleNotesPanel);
+  elements.noteCountToggle.addEventListener("keydown", handleCountKeydown);
+  elements.notesPanelClose.addEventListener("click", closeNotesPanel);
   elements.connectButton.addEventListener("click", handleConnectClick);
   elements.downloadButton.addEventListener("click", handleDownloadClick);
   elements.reauthorizeLink.addEventListener("click", handleReauthorizeClick);
+  chrome.storage.onChanged.addListener(handleStorageChanged);
+}
 
-  chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== "local") {
-      return;
-    }
+function handleStorageChanged(changes, areaName) {
+  if (areaName !== "local") {
+    return;
+  }
 
-    refreshSummary();
+  refreshSummary();
 
-    if (changes[NOTES_KEY]) {
-      tryAutoSyncPendingNotes();
-    }
+  if (!elements.notesPanel.hidden) {
+    refreshNotesList();
+  }
+
+  if (changes[NOTES_KEY]) {
+    tryAutoSyncPendingNotes();
+  }
+}
+
+function handleCountKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  event.preventDefault();
+  toggleNotesPanel();
+}
+
+async function toggleNotesPanel() {
+  const shouldExpand = elements.notesPanel.hidden;
+  setNotesPanelExpanded(shouldExpand);
+
+  if (shouldExpand) {
+    await refreshNotesList();
+  }
+}
+
+function closeNotesPanel() {
+  setNotesPanelExpanded(false);
+  elements.noteCountToggle.focus();
+}
+
+function setNotesPanelExpanded(isExpanded) {
+  elements.notesPanel.hidden = !isExpanded;
+  elements.noteCountToggle.setAttribute("aria-expanded", String(isExpanded));
+}
+
+async function refreshNotesList() {
+  const [notes, pendingNotes] = await Promise.all([getNotes(), getPendingNotes()]);
+  const pendingIds = new Set(pendingNotes.map((note) => note.id));
+  renderNotesList(notes, pendingIds);
+}
+
+function renderNotesList(notes, pendingIds) {
+  elements.notesList.replaceChildren();
+  const sortedNotes = sortNotesLatestFirst(notes);
+
+  if (sortedNotes.length === 0) {
+    elements.notesList.appendChild(createNotesEmptyState());
+    return;
+  }
+
+  for (const note of sortedNotes) {
+    elements.notesList.appendChild(createNoteItem(note, pendingIds.has(note.id)));
+  }
+}
+
+function createNotesEmptyState() {
+  return createTextElement("p", "notes-empty", t("noLocalNotesStatus"));
+}
+
+function createNoteItem(note, isPending) {
+  const item = document.createElement("article");
+  item.className = "note-item";
+  item.appendChild(createTextElement("p", "note-text", truncateText(note.text)));
+
+  if (note.comment) {
+    item.appendChild(createNoteComment(note.comment));
+  }
+
+  item.appendChild(createNoteMeta(note, isPending));
+  return item;
+}
+
+function createNoteComment(comment) {
+  return createTextElement("p", "note-comment", `${t("logCommentPrefix")}${comment}`);
+}
+
+function createNoteMeta(note, isPending) {
+  const meta = document.createElement("p");
+  meta.className = "note-meta";
+  meta.appendChild(createNoteTime(note.ts));
+
+  if (isPending) {
+    meta.appendChild(createTextElement("span", "note-pending", t("pendingLabel")));
+  }
+
+  return meta;
+}
+
+function createNoteTime(timestamp) {
+  const time = createTextElement("time", "note-time", formatNoteTime(timestamp));
+  time.setAttribute("datetime", timestamp);
+  return time;
+}
+
+function createTextElement(tagName, className, text) {
+  const element = document.createElement(tagName);
+  element.className = className;
+  element.textContent = text;
+  return element;
+}
+
+function sortNotesLatestFirst(notes) {
+  return [...notes].sort((left, right) => {
+    const timeDifference = parseNoteTime(right.ts) - parseNoteTime(left.ts);
+    return timeDifference || String(right.id).localeCompare(String(left.id));
   });
+}
+
+function parseNoteTime(timestamp) {
+  return Date.parse(timestamp) || 0;
+}
+
+function truncateText(value, limit = NOTE_PREVIEW_LIMIT) {
+  const text = String(value || "");
+  return text.length > limit ? `${text.slice(0, limit)}…` : text;
+}
+
+function formatNoteTime(timestamp, now = new Date()) {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const time = `${padTime(date.getHours())}:${padTime(date.getMinutes())}`;
+  return isSameLocalDay(date, now) ? time : `${getDateKey(date)} ${time}`;
+}
+
+function isSameLocalDay(left, right) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+function padTime(value) {
+  return String(value).padStart(2, "0");
 }
 
 async function refreshSummary() {

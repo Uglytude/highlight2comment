@@ -7,6 +7,22 @@
     "message": "Notizen",
     "description": "Unit label shown next to the local note count."
   },
+  "notesListTitle": {
+    "message": "Lokale Notizen",
+    "description": "Title shown above the expandable local notes list."
+  },
+  "pendingLabel": {
+    "message": "Nicht synchronisiert",
+    "description": "Label shown when a local note has not been synced to Obsidian."
+  },
+  "closeLabel": {
+    "message": "Notizliste schließen",
+    "description": "Accessible label for the button that closes the local notes list."
+  },
+  "notesListToggleLabel": {
+    "message": "Lokale Notizen ein- oder ausblenden",
+    "description": "Accessible label for the note count control that toggles the local notes list."
+  },
   "obsidianLabel": {
     "message": "Obsidian",
     "description": "Label for the Obsidian connection row."

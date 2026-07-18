@@ -10,11 +10,39 @@
     <main class="popup">
       <header class="popup-header">
         <h1>highlight2comment</h1>
-        <div class="count">
+        <div
+          id="note-count-toggle"
+          class="count"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="notes-panel"
+          data-i18n-aria-label="notesListToggleLabel"
+        >
           <span id="note-count">0</span>
           <span data-i18n="countUnit"></span>
         </div>
       </header>
+
+      <section
+        id="notes-panel"
+        class="notes-panel"
+        aria-labelledby="notes-list-title"
+        hidden
+      >
+        <header class="notes-panel-header">
+          <h2 id="notes-list-title" data-i18n="notesListTitle"></h2>
+          <button
+            id="notes-panel-close"
+            class="notes-panel-close"
+            type="button"
+            data-i18n-aria-label="closeLabel"
+          >
+            &times;
+          </button>
+        </header>
+        <div id="notes-list" class="notes-list"></div>
+      </section>
 
       <section class="state" aria-live="polite">
         <div>

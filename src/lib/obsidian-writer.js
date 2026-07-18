@@ -12,12 +12,12 @@ export function isFileSystemAccessSupported() {
   return (
     typeof window !== "undefined" &&
     "showDirectoryPicker" in window &&
-    typeof indexedDB !== "undefined"
+    isSavedDirectoryAccessSupported()
   );
 }
 
 export async function authorizeDirectory() {
-  assertSupported();
+  assertPickerSupported();
 
   const savedDirectoryHandle = await getDirectoryHandle();
   const restoredDirectoryHandle = await restoreDirectoryPermission(savedDirectoryHandle);
@@ -30,7 +30,7 @@ export async function authorizeDirectory() {
 }
 
 export async function reauthorizeDirectory() {
-  assertSupported();
+  assertPickerSupported();
   return pickAndSaveDirectory();
 }
 
@@ -48,10 +48,22 @@ export async function getDirectoryPermissionState() {
     return "unsupported";
   }
 
+  return getSavedDirectoryPermissionState();
+}
+
+export async function getSavedDirectoryPermissionState() {
+  if (!isSavedDirectoryAccessSupported()) {
+    return "unsupported";
+  }
+
   const directoryHandle = await getDirectoryHandle();
 
   if (!directoryHandle) {
     return "missing";
+  }
+
+  if (typeof directoryHandle.queryPermission !== "function") {
+    return "unsupported";
   }
 
   return directoryHandle.queryPermission(READ_WRITE_MODE);
@@ -108,12 +120,16 @@ async function pickAndSaveDirectory() {
 }
 
 async function requireWritableDirectory() {
-  assertSupported();
+  assertSavedDirectoryAccessSupported();
 
   const directoryHandle = await getDirectoryHandle();
 
   if (!directoryHandle) {
     throw new Error(t("obsidianFolderNotConnectedError"));
+  }
+
+  if (typeof directoryHandle.queryPermission !== "function") {
+    throw new Error(t("fileSystemAccessUnsupportedError"));
   }
 
   const permission = await directoryHandle.queryPermission(READ_WRITE_MODE);
@@ -166,10 +182,20 @@ async function saveDirectoryHandle(directoryHandle) {
   await setValue(DIRECTORY_HANDLE_KEY, directoryHandle);
 }
 
-function assertSupported() {
+function assertPickerSupported() {
   if (!isFileSystemAccessSupported()) {
     throw new Error(t("fileSystemAccessUnsupportedError"));
   }
+}
+
+function assertSavedDirectoryAccessSupported() {
+  if (!isSavedDirectoryAccessSupported()) {
+    throw new Error(t("fileSystemAccessUnsupportedError"));
+  }
+}
+
+function isSavedDirectoryAccessSupported() {
+  return typeof indexedDB !== "undefined";
 }
 
 async function openDatabase() {

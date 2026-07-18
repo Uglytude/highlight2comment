@@ -1,24 +1,18 @@
-import { getDateKey, mergeNotesIntoLog, renderNotes } from "../lib/markdown.js";
+import { getDateKey, renderNotes } from "../lib/markdown.js";
 import { log } from "../lib/logger.js";
-import { refreshBadge } from "../lib/badge.js";
 import { getMessage as t } from "../lib/i18n.js";
-import {
-  getNoteCount,
-  getNotes,
-  getPendingNotes,
-  markNotesWritten,
-  NOTES_KEY,
-} from "../lib/storage.js";
+import { getNoteCount, getNotes, NOTES_KEY } from "../lib/storage.js";
 import {
   authorizeDirectory,
   getConnectedDirectoryName,
   getDirectoryPermissionState,
   isFileSystemAccessSupported,
   LOG_FILE_NAME,
-  readLogText,
   reauthorizeDirectory,
-  writeLogText,
 } from "../lib/obsidian-writer.js";
+
+const SYNC_MESSAGE = "H2C_SYNC";
+const SERVICE_WORKER_TARGET = "service-worker";
 
 const elements = {};
 let syncInFlight = false;
@@ -180,15 +174,101 @@ async function tryAutoSyncPendingNotes() {
     return;
   }
 
-  const permissionState = await getDirectoryPermissionState();
-  await updateObsidianConnection(permissionState);
+  await syncPendingNotes(true);
+}
 
-  if (permissionState === "unsupported") {
+async function syncPendingNotes(silent) {
+  if (syncInFlight) {
+    return null;
+  }
+
+  syncInFlight = true;
+
+  try {
+    if (!silent) {
+      setStatus(t("writingObsidianStatus"));
+    }
+
+    const result = await requestOffscreenSync(silent ? "popup_auto" : "popup_manual");
+    showSyncResult(result, silent);
+    return result;
+  } catch (error) {
+    await log("obsidian_sync_popup_request_failed", {
+      message: getErrorMessage(error),
+    });
+    setStatus(getErrorMessage(error), true);
+    return null;
+  } finally {
+    syncInFlight = false;
+    await refreshSummary();
+  }
+}
+
+function requestOffscreenSync(reason) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: SYNC_MESSAGE,
+        target: SERVICE_WORKER_TARGET,
+        reason,
+      },
+      (response) => {
+        const runtimeError = chrome.runtime.lastError;
+
+        if (runtimeError) {
+          reject(new Error(runtimeError.message || String(runtimeError)));
+          return;
+        }
+
+        resolve(response);
+      },
+    );
+  });
+}
+
+function showSyncResult(result, silent) {
+  if (!result) {
+    setStatus(t("unknownErrorStatus"), true);
     return;
   }
 
-  if (permissionState === "granted") {
-    await syncPendingNotes(true);
+  if (!result.ok) {
+    setStatus(result.error || t("unknownErrorStatus"), true);
+    return;
+  }
+
+  if (result.status === "synced") {
+    setStatus(
+      t("appendedToLogStatus", [
+        String(result.count || 0),
+        result.fileName || LOG_FILE_NAME,
+      ]),
+    );
+    return;
+  }
+
+  if (result.status === "idle") {
+    if (!silent) {
+      setStatus(t("noPendingNotesStatus"));
+    }
+    return;
+  }
+
+  if (result.status === "needsAuth") {
+    showNeedsAuthStatus(result.permissionState, silent);
+    return;
+  }
+
+  if (result.status === "unsupported" && !silent) {
+    setStatus(t("obsidianStateUnsupported"), true);
+  }
+}
+
+function showNeedsAuthStatus(permissionState, silent) {
+  if (permissionState === "missing") {
+    if (!silent) {
+      setStatus(t("obsidianFolderNotConnectedError"), true);
+    }
     return;
   }
 
@@ -199,55 +279,11 @@ async function tryAutoSyncPendingNotes() {
 
   if (permissionState === "denied") {
     setStatus(t("reauthorizationRequiredStatus"), true);
-  }
-}
-
-async function syncPendingNotes(silent) {
-  if (syncInFlight) {
     return;
   }
 
-  syncInFlight = true;
-
-  try {
-    const pendingNotes = await getPendingNotes();
-
-    if (pendingNotes.length === 0) {
-      if (!silent) {
-        setStatus(t("noPendingNotesStatus"));
-      }
-      return;
-    }
-
-    if (!silent) {
-      setStatus(t("writingObsidianStatus"));
-    }
-
-    const existingMarkdown = await readLogText();
-    const fullMarkdown = mergeNotesIntoLog(
-      pendingNotes,
-      existingMarkdown,
-      getMarkdownRenderOptions(),
-    );
-    await writeLogText(fullMarkdown);
-    await markNotesWritten(pendingNotes.map((note) => note.id));
-    await refreshBadge("obsidian_sync");
-
-    await log("obsidian_append_succeeded", {
-      count: pendingNotes.length,
-      fileName: LOG_FILE_NAME,
-    });
-    setStatus(
-      t("appendedToLogStatus", [String(pendingNotes.length), LOG_FILE_NAME]),
-    );
-  } catch (error) {
-    await log("obsidian_append_failed", {
-      message: getErrorMessage(error),
-    });
-    setStatus(getErrorMessage(error), true);
-  } finally {
-    syncInFlight = false;
-    await refreshSummary();
+  if (!silent) {
+    setStatus(t("reauthorizationRequiredStatus"), true);
   }
 }
 

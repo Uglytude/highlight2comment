@@ -1,0 +1,17 @@
+# macOS 外接盘元数据
+.DS_Store
+._*
+
+# 依赖 / 构建
+node_modules/
+dist/
+build/
+
+# 日志 / 临时
+*.log
+.tmp/
+
+# 本机工作文档(不进仓库,SOP 铁律)
+AGENTS.md
+CLAUDE.md
+BUILD_SPEC.md

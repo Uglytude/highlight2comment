@@ -1,0 +1,218 @@
+{
+  "extDescription": {
+    "message": "选中网页文字,写一句评论,本地保存并导出 Markdown。",
+    "description": "Extension description shown by Chrome."
+  },
+  "countUnit": {
+    "message": "条",
+    "description": "Unit label shown next to the local note count."
+  },
+  "obsidianLabel": {
+    "message": "Obsidian",
+    "description": "Label for the Obsidian connection row."
+  },
+  "obsidianStateConnected": {
+    "message": "已连接",
+    "description": "Obsidian connection state when write permission is granted."
+  },
+  "obsidianStateNotConnected": {
+    "message": "未连接",
+    "description": "Obsidian connection state when no folder is saved."
+  },
+  "obsidianStateReauthorizationRemembered": {
+    "message": "需重新授权(文件夹还记得)",
+    "description": "Obsidian connection state when the saved folder needs permission again."
+  },
+  "obsidianStateReauthorizationRequired": {
+    "message": "需重新授权",
+    "description": "Obsidian connection state when permission is denied."
+  },
+  "obsidianStateUnsupported": {
+    "message": "不支持",
+    "description": "Obsidian connection state when the browser lacks File System Access support."
+  },
+  "connectObsidianFolderButton": {
+    "message": "连接 Obsidian 文件夹",
+    "description": "Button label for first-time Obsidian folder authorization."
+  },
+  "reconnectAndWriteObsidianButton": {
+    "message": "重新连接并写入 Obsidian",
+    "description": "Button label when Obsidian permission must be renewed."
+  },
+  "downloadAllButton": {
+    "message": "下载全部",
+    "description": "Button label for exporting all local notes."
+  },
+  "connectedDirectorySummary": {
+    "message": "笔记自动写入 $NAME$ ·",
+    "description": "Small note shown when an Obsidian folder is connected.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Obsidian"
+      }
+    }
+  },
+  "changeFolderLink": {
+    "message": "更换文件夹",
+    "description": "Link label for choosing a different Obsidian folder."
+  },
+  "chooseNewObsidianFolderStatus": {
+    "message": "请选择新的 Obsidian 文件夹。",
+    "description": "Status shown before reauthorizing a new Obsidian folder."
+  },
+  "connectedWritingPendingStatus": {
+    "message": "已连接,正在写入待追加笔记。",
+    "description": "Status shown after connecting Obsidian before pending notes are appended."
+  },
+  "noLocalNotesStatus": {
+    "message": "还没有本地笔记。",
+    "description": "Status shown when the user exports before saving any notes."
+  },
+  "exportDownloadedStatus": {
+    "message": "已下载 $COUNT$ 条笔记。",
+    "description": "Status shown after exporting local notes.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reauthorizationRememberedStatus": {
+    "message": "Obsidian 需要重新授权(文件夹还记得);本地笔记仍然保存在浏览器里。",
+    "description": "Status shown when a remembered folder needs permission again."
+  },
+  "reauthorizationRequiredStatus": {
+    "message": "Obsidian 需要重新授权;本地笔记仍然保存在浏览器里。",
+    "description": "Status shown when Obsidian permission was denied."
+  },
+  "noPendingNotesStatus": {
+    "message": "没有待追加笔记。",
+    "description": "Status shown when all local notes are already written to Obsidian."
+  },
+  "writingObsidianStatus": {
+    "message": "正在写入 Obsidian。",
+    "description": "Status shown while appending pending notes to Obsidian."
+  },
+  "appendedToLogStatus": {
+    "message": "已追加 $COUNT$ 条到 $FILE$。",
+    "description": "Status shown after pending notes are appended to the Obsidian log.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "file": {
+        "content": "$2",
+        "example": "highlight2comment-log.md"
+      }
+    }
+  },
+  "reconnectingObsidianFolderStatus": {
+    "message": "正在重新连接 Obsidian 文件夹。",
+    "description": "Status shown when reconnecting a remembered or denied Obsidian folder."
+  },
+  "chooseObsidianFolderStatus": {
+    "message": "请选择 Obsidian 文件夹。",
+    "description": "Status shown before first-time Obsidian folder authorization."
+  },
+  "folderSelectionCancelledStatus": {
+    "message": "已取消选择文件夹。",
+    "description": "Status shown when the user cancels the folder picker."
+  },
+  "unknownErrorStatus": {
+    "message": "发生未知错误。",
+    "description": "Fallback status for unexpected errors without a message."
+  },
+  "extensionDisconnectedRefresh": {
+    "message": "插件刚更新过,请刷新本页面再试",
+    "description": "Content script message shown when the injected page script lost connection to the extension."
+  },
+  "selectionToolbarAria": {
+    "message": "划线操作",
+    "description": "ARIA label for the small selection action toolbar."
+  },
+  "highlightOnlyAction": {
+    "message": "只存划线",
+    "description": "Tooltip and ARIA label for saving selected text without a comment."
+  },
+  "addCommentAction": {
+    "message": "加评论",
+    "description": "Tooltip and ARIA label for opening the comment editor."
+  },
+  "editorDialogLabel": {
+    "message": "添加评论",
+    "description": "ARIA label for the comment editor dialog."
+  },
+  "commentPlaceholder": {
+    "message": "写一句评论",
+    "description": "Placeholder and ARIA label for the comment textarea."
+  },
+  "saveAction": {
+    "message": "保存",
+    "description": "ARIA label for the comment editor save button."
+  },
+  "saveFailedStatus": {
+    "message": "保存失败",
+    "description": "Fallback content script status when saving a note fails without a specific error."
+  },
+  "logCommentPrefix": {
+    "message": "评:",
+    "description": "Prefix written before a saved comment in exported Markdown."
+  },
+  "unknownSource": {
+    "message": "未知来源",
+    "description": "Markdown source label used when a note URL cannot be parsed."
+  },
+  "invalidNoteError": {
+    "message": "note 数据为空或格式错误",
+    "description": "Error shown when a note payload is missing or malformed."
+  },
+  "requiredNoteFieldError": {
+    "message": "note.$FIELD$ 不能为空",
+    "description": "Error shown when a required note field is empty.",
+    "placeholders": {
+      "field": {
+        "content": "$1",
+        "example": "text"
+      }
+    }
+  },
+  "invalidNoteTimestampError": {
+    "message": "note.ts 不是有效时间",
+    "description": "Error shown when a note timestamp cannot be parsed."
+  },
+  "invalidNoteDateKeyError": {
+    "message": "note.dateKey 必须是 YYMMDD",
+    "description": "Error shown when a note date key does not use the YYMMDD format."
+  },
+  "obsidianWritePermissionMissingError": {
+    "message": "没有获得 Obsidian 文件夹写入权限",
+    "description": "Error shown when the chosen Obsidian folder does not grant write permission."
+  },
+  "obsidianFolderNotConnectedError": {
+    "message": "还没有连接 Obsidian 文件夹",
+    "description": "Error shown when a write is attempted before connecting a folder."
+  },
+  "obsidianFolderNeedsReauthorizationError": {
+    "message": "Obsidian 文件夹需要重新授权;本地笔记仍然保存在浏览器里",
+    "description": "Error shown when a saved Obsidian folder no longer has write permission."
+  },
+  "fileSystemAccessUnsupportedError": {
+    "message": "当前浏览器不支持 File System Access API",
+    "description": "Error shown when the browser cannot use folder authorization."
+  },
+  "indexedDbOpenFailedError": {
+    "message": "IndexedDB 打开失败",
+    "description": "Error shown when the saved folder handle database cannot open."
+  },
+  "indexedDbOperationFailedError": {
+    "message": "IndexedDB 操作失败",
+    "description": "Error shown when a saved folder handle database operation fails."
+  },
+  "indexedDbOperationAbortedError": {
+    "message": "IndexedDB 操作中断",
+    "description": "Error shown when a saved folder handle database operation is aborted."
+  }
+}

@@ -1,5 +1,3 @@
-import { getMessage as t } from "./i18n.js";
-
 export const LOG_FILE_NAME = "highlight2comment-log.md";
 
 const DB_NAME = "highlight2comment";
@@ -111,7 +109,7 @@ async function pickAndSaveDirectory() {
   const permission = await requestWritePermission(directoryHandle);
 
   if (permission !== "granted") {
-    throw new Error(t("obsidianWritePermissionMissingError"));
+    throwWriterError("obsidianWritePermissionMissingError");
   }
 
   await saveDirectoryHandle(directoryHandle);
@@ -125,17 +123,17 @@ async function requireWritableDirectory() {
   const directoryHandle = await getDirectoryHandle();
 
   if (!directoryHandle) {
-    throw new Error(t("obsidianFolderNotConnectedError"));
+    throwWriterError("obsidianFolderNotConnectedError");
   }
 
   if (typeof directoryHandle.queryPermission !== "function") {
-    throw new Error(t("fileSystemAccessUnsupportedError"));
+    throwWriterError("fileSystemAccessUnsupportedError");
   }
 
   const permission = await directoryHandle.queryPermission(READ_WRITE_MODE);
 
   if (permission !== "granted") {
-    throw new Error(t("obsidianFolderNeedsReauthorizationError"));
+    throwWriterError("obsidianFolderNeedsReauthorizationError");
   }
 
   return directoryHandle;
@@ -184,14 +182,18 @@ async function saveDirectoryHandle(directoryHandle) {
 
 function assertPickerSupported() {
   if (!isFileSystemAccessSupported()) {
-    throw new Error(t("fileSystemAccessUnsupportedError"));
+    throwWriterError("fileSystemAccessUnsupportedError");
   }
 }
 
 function assertSavedDirectoryAccessSupported() {
   if (!isSavedDirectoryAccessSupported()) {
-    throw new Error(t("fileSystemAccessUnsupportedError"));
+    throwWriterError("fileSystemAccessUnsupportedError");
   }
+}
+
+function throwWriterError(messageKey) {
+  throw new Error(messageKey);
 }
 
 function isSavedDirectoryAccessSupported() {
@@ -212,7 +214,7 @@ async function openDatabase() {
 
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => {
-      reject(request.error || new Error(t("indexedDbOpenFailedError")));
+      reject(request.error || createWriterError("indexedDbOpenFailedError"));
     };
   });
 }
@@ -250,15 +252,19 @@ async function runStore(mode, createRequest) {
     transaction.onerror = () => {
       database.close();
       reject(
-        transaction.error || request.error || new Error(t("indexedDbOperationFailedError")),
+        transaction.error || request.error || createWriterError("indexedDbOperationFailedError"),
       );
     };
 
     transaction.onabort = () => {
       database.close();
       reject(
-        transaction.error || request.error || new Error(t("indexedDbOperationAbortedError")),
+        transaction.error || request.error || createWriterError("indexedDbOperationAbortedError"),
       );
     };
   });
+}
+
+function createWriterError(messageKey) {
+  return new Error(messageKey);
 }

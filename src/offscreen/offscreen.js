@@ -1,8 +1,4 @@
 import { mergeNotesIntoLog } from "../lib/markdown.js";
-import { log } from "../lib/logger.js";
-import { refreshBadge } from "../lib/badge.js";
-import { getMessage as t } from "../lib/i18n.js";
-import { getPendingNotes, markNotesWritten } from "../lib/storage.js";
 import {
   getSavedDirectoryPermissionState,
   LOG_FILE_NAME,
@@ -10,140 +6,76 @@ import {
   writeLogText,
 } from "../lib/obsidian-writer.js";
 
-const SYNC_MESSAGE = "H2C_SYNC";
+const WRITE_MESSAGE = "H2C_WRITE";
 const OFFSCREEN_TARGET = "offscreen";
 
-let activeSync = null;
-let rerunRequested = false;
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!isOffscreenSyncMessage(message)) {
+  if (!isOffscreenWriteMessage(message)) {
     return false;
   }
 
-  queueSync(message.reason).then(sendResponse);
+  handleWriteMessage(message).then(sendResponse);
   return true;
 });
 
-function isOffscreenSyncMessage(message) {
+function isOffscreenWriteMessage(message) {
   return (
     message &&
-    message.type === SYNC_MESSAGE &&
-    (!message.target || message.target === OFFSCREEN_TARGET)
+    message.type === WRITE_MESSAGE &&
+    message.target === OFFSCREEN_TARGET
   );
 }
 
-function queueSync(reason) {
-  if (activeSync) {
-    rerunRequested = true;
-    log("obsidian_sync_coalesced", {
-      reason: normalizeReason(reason),
-    });
-    return activeSync;
-  }
-
-  activeSync = runSyncLoop(reason).finally(() => {
-    activeSync = null;
-  });
-  return activeSync;
-}
-
-async function runSyncLoop(reason) {
-  let totalCount = 0;
-  let result;
-
-  do {
-    rerunRequested = false;
-    result = await runSyncOnce(reason);
-    totalCount += result.count || 0;
-  } while (rerunRequested && shouldRerun(result));
-
-  const finalStatus = totalCount > 0 && result.status === "idle" ? "synced" : result.status;
-
-  return {
-    ...result,
-    status: finalStatus,
-    count: totalCount,
-  };
-}
-
-function shouldRerun(result) {
-  return result.ok && (result.status === "synced" || result.status === "idle");
-}
-
-async function runSyncOnce(reason) {
+async function handleWriteMessage(message) {
   try {
-    return await syncPendingNotes(reason);
+    return await writeNotes(message);
   } catch (error) {
-    const message = getErrorMessage(error);
+    const errorMessage = getErrorMessage(error);
 
-    await log("obsidian_append_failed", {
-      message,
-      reason: normalizeReason(reason),
-    });
-    await refreshBadge("obsidian_sync_failed");
+    console.warn("[highlight2comment:offscreen] write failed", errorMessage);
 
     return {
       ok: false,
-      status: "failed",
-      count: 0,
-      error: message,
-      fileName: LOG_FILE_NAME,
+      error: errorMessage,
     };
   }
 }
 
-async function syncPendingNotes(reason) {
+async function writeNotes(message) {
   const permissionState = await getSavedDirectoryPermissionState();
 
   if (permissionState !== "granted") {
-    return handleSyncWithoutPermission(permissionState, reason);
-  }
-
-  const pendingNotes = await getPendingNotes();
-
-  if (pendingNotes.length === 0) {
-    await log("obsidian_sync_no_pending", {
-      reason: normalizeReason(reason),
+    console.info("[highlight2comment:offscreen] write skipped", {
+      permissionState,
       fileName: LOG_FILE_NAME,
     });
-    await refreshBadge("obsidian_sync_no_pending");
-    return createSyncResult("idle", 0, permissionState);
+    return createSyncResult(getUnavailableStatus(permissionState), 0, permissionState);
   }
 
+  const pendingNotes = getMessageNotes(message);
   const existingMarkdown = await readLogText();
   const fullMarkdown = mergeNotesIntoLog(
     pendingNotes,
     existingMarkdown,
-    getMarkdownRenderOptions(),
+    message.renderOptions || {},
   );
 
   await writeLogText(fullMarkdown);
-  await markNotesWritten(pendingNotes.map((note) => note.id));
-  await refreshBadge("obsidian_sync");
 
-  await log("obsidian_append_succeeded", {
+  console.info("[highlight2comment:offscreen] write succeeded", {
     count: pendingNotes.length,
     fileName: LOG_FILE_NAME,
-    reason: normalizeReason(reason),
   });
 
   return createSyncResult("synced", pendingNotes.length, permissionState);
 }
 
-async function handleSyncWithoutPermission(permissionState, reason) {
-  await log("obsidian_sync_needs_auth", {
-    permissionState,
-    reason: normalizeReason(reason),
-    fileName: LOG_FILE_NAME,
-  });
-  await refreshBadge("obsidian_sync_needs_auth");
+function getMessageNotes(message) {
+  return Array.isArray(message.notes) ? message.notes : [];
+}
 
-  return createSyncResult(
-    permissionState === "unsupported" ? "unsupported" : "needsAuth",
-    0,
-    permissionState,
-  );
+function getUnavailableStatus(permissionState) {
+  return permissionState === "unsupported" ? "unsupported" : "needsAuth";
 }
 
 function createSyncResult(status, count, permissionState) {
@@ -154,17 +86,6 @@ function createSyncResult(status, count, permissionState) {
     permissionState,
     fileName: LOG_FILE_NAME,
   };
-}
-
-function getMarkdownRenderOptions() {
-  return {
-    commentPrefix: t("logCommentPrefix"),
-    unknownSourceLabel: t("unknownSource"),
-  };
-}
-
-function normalizeReason(reason) {
-  return String(reason || "manual");
 }
 
 function getErrorMessage(error) {

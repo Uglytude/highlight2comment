@@ -189,7 +189,7 @@ async function syncPendingNotes(silent) {
       setStatus(t("writingObsidianStatus"));
     }
 
-    const result = await requestOffscreenSync(silent ? "popup_auto" : "popup_manual");
+    const result = await requestServiceWorkerSync(silent ? "popup_auto" : "popup_manual");
     showSyncResult(result, silent);
     return result;
   } catch (error) {
@@ -204,7 +204,7 @@ async function syncPendingNotes(silent) {
   }
 }
 
-function requestOffscreenSync(reason) {
+function requestServiceWorkerSync(reason) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
@@ -391,7 +391,11 @@ function getErrorMessage(error) {
     return t("folderSelectionCancelledStatus");
   }
 
-  return error && error.message ? error.message : t("unknownErrorStatus");
+  if (error && error.message) {
+    return t(error.message);
+  }
+
+  return t("unknownErrorStatus");
 }
 
 function isAbortError(error) {

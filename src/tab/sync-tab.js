@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   bindElements();
+  showVersion();
   applyStaticMessages();
   bindEvents();
   await refreshState();
@@ -47,6 +48,11 @@ async function init() {
 function bindElements() {
   elements.status = document.getElementById("sync-status");
   elements.reconnectButton = document.getElementById("reconnect-button");
+  elements.extensionVersion = document.getElementById("extension-version");
+}
+
+function showVersion() {
+  elements.extensionVersion.textContent = `v${chrome.runtime.getManifest().version}`;
 }
 
 function applyStaticMessages() {

@@ -126,7 +126,7 @@
     "description": "Status shown while appending pending notes to Obsidian."
   },
   "appendedToLogStatus": {
-    "message": "Added $COUNT$ notes to log.",
+    "message": "Added $COUNT$ to log.",
     "description": "Status shown after pending notes are appended to the Obsidian log.",
     "placeholders": {
       "count": {

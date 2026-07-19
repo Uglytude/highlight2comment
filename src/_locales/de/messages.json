@@ -126,7 +126,7 @@
     "description": "Status shown while appending pending notes to Obsidian."
   },
   "appendedToLogStatus": {
-    "message": "$COUNT$ Notizen gespeichert.",
+    "message": "Gespeichert: $COUNT$",
     "description": "Status shown after pending notes are appended to the Obsidian log.",
     "placeholders": {
       "count": {

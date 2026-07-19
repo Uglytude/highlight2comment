@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   bindElements();
+  showVersion();
   applyStaticMessages();
   bindEvents();
 
@@ -55,6 +56,11 @@ function bindElements() {
   elements.connectedDirectory = document.getElementById("connected-directory");
   elements.connectedDirectorySummary = document.getElementById("connected-directory-summary");
   elements.reauthorizeLink = document.getElementById("reauthorize-link");
+  elements.extensionVersion = document.getElementById("extension-version");
+}
+
+function showVersion() {
+  elements.extensionVersion.textContent = `v${chrome.runtime.getManifest().version}`;
 }
 
 function applyStaticMessages() {

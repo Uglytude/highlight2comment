@@ -190,10 +190,44 @@ h1 {
   padding: 10px 0;
 }
 
+.state.guardian-paused,
+.state.guardian-paused .label {
+  color: #b06000;
+}
+
 .label {
   color: #5f6368;
   display: inline-block;
   min-width: 72px;
+}
+
+.guardian-hint {
+  background: #f8f9fa;
+  border: 1px solid #e3e6e8;
+  border-radius: 8px;
+  margin: -4px 0 14px;
+  padding: 11px;
+}
+
+.guardian-hint[hidden] {
+  display: none;
+}
+
+.guardian-hint p {
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+#guardian-hint-dismiss {
+  background: #ffffff;
+  border: 1px solid #c7c9cc;
+  color: #202124;
+  font-size: 12px;
+  height: 30px;
+  margin-top: 9px;
+  padding: 0 10px;
 }
 
 .actions {

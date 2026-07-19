@@ -38,6 +38,20 @@ Comment: worth remembering
 [^abc123]: jamesclear.com · 08:00 · https://jamesclear.com/3-2-1/example
 ```
 
+## FAQ
+
+**What is that small pinned tab on the far left?**
+That is the auto-sync guardian. Chrome only keeps folder permission alive while the extension has a real open tab, so this little tab is what makes background writing possible. Leave it alone and everything stays automatic.
+
+**I closed the pinned tab. Did I break something?**
+No. Your notes are always saved in the browser first. The popup will show "Auto-sync paused" with a one-click button to bring the guardian back.
+
+**Why does it ask me to reconnect after restarting the browser?**
+Chrome revokes folder permission for all extensions on restart and offers extensions no "allow forever" option yet. One click on Reconnect after a restart is the entire cost. If Chrome ever adds persistent permission for extensions, this click disappears too.
+
+**I never connected a folder. Do I need to care about any of this?**
+No. Highlighting, commenting, and "Download all" work with zero permissions and zero setup.
+
 ## Privacy, honestly
 
 - Notes are stored in your browser's local extension storage and, if you connect one, in the folder you chose. Nothing else.
@@ -73,6 +87,20 @@ Comment: worth remembering
 
 - 选中文字,选区末尾会出现一个小胶囊:**✓** 一键只存划线,**💬** 写一句评论(回车即存,Esc 取消)。
 - 点扩展图标:可一键下载全部笔记为 `.md`,或连接一个文件夹(比如你的 Obsidian 库),之后打开面板时笔记自动追加进 `highlight2comment-log.md`。图标角标会显示还有几条待同步。
+
+## 常见问题
+
+**标签栏最左边那个钉住的小标签是什么?**
+它是自动同步的守护者。Chrome 只在插件拥有一个真正打开的标签页时才保留文件夹授权,这个小标签就是后台自动写入能成立的原因。放着别管,一切自动。
+
+**我把小标签关了,坏了吗?**
+没坏。笔记永远先安全存在浏览器里。面板会显示「自动同步已暂停」,一键就能把守护标签请回来。
+
+**为什么浏览器重启后要点一次 Reconnect?**
+Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件「永久允许」的选项。重启后点一次,就是全部成本。哪天 Chrome 补上这个选项,这一下也会消失。
+
+**我不连文件夹,需要管这些吗?**
+不需要。划线、评论、「Download all」导出,零授权零设置,装好就能用。
 
 ## 隐私,说实话
 

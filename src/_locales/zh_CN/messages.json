@@ -35,6 +35,10 @@
     "message": "自动同步守护中",
     "description": "Obsidian connection state when the persistent sync tab is alive."
   },
+  "obsidianStateSyncGuardianPaused": {
+    "message": "自动同步已暂停(守护标签被关闭)",
+    "description": "Amber Obsidian state shown after the user closes the automatic sync guardian tab."
+  },
   "obsidianStateNotConnected": {
     "message": "未连接",
     "description": "Obsidian connection state when no folder is saved."
@@ -58,6 +62,10 @@
   "reconnectAndWriteObsidianButton": {
     "message": "重新连接",
     "description": "Button label when Obsidian permission must be renewed."
+  },
+  "restoreAutoSyncButton": {
+    "message": "恢复自动同步",
+    "description": "Primary popup button that recreates a guardian tab closed by the user."
   },
   "downloadAllButton": {
     "message": "下载全部",
@@ -84,6 +92,18 @@
   "connectedWritingPendingStatus": {
     "message": "已连接,同步中…",
     "description": "Status shown after connecting Obsidian before pending notes are appended."
+  },
+  "guardianHintMessage": {
+    "message": "已开启自动同步 📌 标签栏最左边多了一个小标签,它负责在后台写入你的笔记,请不要关闭它。万一关了,插件会转为手动模式,可随时在这里恢复。",
+    "description": "One-time popup education card shown after automatic sync is connected."
+  },
+  "guardianHintDismissButton": {
+    "message": "知道了",
+    "description": "Button that permanently dismisses the one-time guardian tab education card."
+  },
+  "restoringAutoSyncStatus": {
+    "message": "正在恢复自动同步…",
+    "description": "Popup status shown while permission, the guardian tab, and pending sync are restored."
   },
   "noLocalNotesStatus": {
     "message": "还没有笔记。",
@@ -156,8 +176,12 @@
     "description": "Fallback status for unexpected errors without a message."
   },
   "syncTabTitle": {
-    "message": "highlight2comment 自动同步",
-    "description": "Title shown on the persistent automatic sync tab."
+    "message": "📌 这个小标签在守护你的自动同步",
+    "description": "Friendly main heading shown on the persistent automatic sync tab."
+  },
+  "syncTabDocumentTitle": {
+    "message": "📌 highlight2comment · auto-sync",
+    "description": "Browser tab title for the persistent automatic sync guardian."
   },
   "syncTabStatusConnected": {
     "message": "已连接",
@@ -178,8 +202,8 @@
     }
   },
   "syncTabKeepOpenHint": {
-    "message": "这个标签页负责自动同步,请别关闭;关了插件会退回手动模式。",
-    "description": "Small explanation shown below the reconnect button on the persistent sync tab."
+    "message": "关掉它,笔记就要手动同步了。放着别管就好。",
+    "description": "Friendly explanation shown below the main heading on the persistent sync tab."
   },
   "extensionDisconnectedRefresh": {
     "message": "插件刚更新过,请刷新本页面再试。",

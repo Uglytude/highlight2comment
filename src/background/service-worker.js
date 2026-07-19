@@ -15,6 +15,7 @@ const SYNC_MESSAGE = "H2C_SYNC";
 const WRITE_MESSAGE = "H2C_WRITE";
 const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
 const GET_SYNC_TAB_STATE_MESSAGE = "H2C_GET_SYNC_TAB_STATE";
+const RESTORE_SYNC_TAB_MESSAGE = "H2C_RESTORE_SYNC_TAB";
 const SERVICE_WORKER_TARGET = "service-worker";
 const SYNC_TAB_TARGET = "sync-tab";
 const OFFSCREEN_TARGET = "offscreen";
@@ -60,6 +61,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (isEnsureSyncTabMessage(message)) {
     handleEnsureSyncTabMessage(message).then(sendResponse);
+    return true;
+  }
+
+  if (isRestoreSyncTabMessage(message)) {
+    handleRestoreSyncTabMessage().then(sendResponse);
     return true;
   }
 
@@ -218,6 +224,32 @@ async function handleEnsureSyncTabMessage(message) {
   }
 }
 
+async function handleRestoreSyncTabMessage() {
+  const reason = "popup_restore_guardian";
+
+  try {
+    await chrome.storage.local.set({ [SYNC_TAB_SUPPRESSED_KEY]: false });
+    const tab = await ensureSyncTab(reason, true);
+    const syncResult = await requestSync("popup_restore_guardian");
+
+    await log("sync_tab_restored", { tabId: tab ? tab.id : null });
+    return {
+      ...syncResult,
+      alive: Boolean(tab),
+      tabId: tab ? tab.id : null,
+    };
+  } catch (error) {
+    await log("sync_tab_restore_failed", {
+      message: getErrorMessage(error),
+    });
+    return {
+      ok: false,
+      alive: false,
+      error: getErrorMessage(error),
+    };
+  }
+}
+
 async function ensureSyncTabSafely(reason, forceCreate) {
   try {
     return await ensureSyncTab(reason, forceCreate);
@@ -285,14 +317,25 @@ async function getSyncTabState() {
   const tab = await getLiveTab(state.tabId);
 
   if (tab) {
-    return { ok: true, alive: true, tabId: tab.id };
+    return {
+      ok: true,
+      alive: true,
+      suppressed: state.suppressed,
+      tabId: tab.id,
+    };
   }
 
   if (Number.isInteger(state.tabId)) {
     await rememberClosedSyncTab(state.tabId, "state_check");
+    return { ok: true, alive: false, suppressed: true, tabId: null };
   }
 
-  return { ok: true, alive: false, tabId: null };
+  return {
+    ok: true,
+    alive: false,
+    suppressed: state.suppressed,
+    tabId: null,
+  };
 }
 
 async function getStoredSyncTabState() {
@@ -659,6 +702,14 @@ function isEnsureSyncTabMessage(message) {
   return (
     message &&
     message.type === ENSURE_SYNC_TAB_MESSAGE &&
+    message.target === SERVICE_WORKER_TARGET
+  );
+}
+
+function isRestoreSyncTabMessage(message) {
+  return (
+    message &&
+    message.type === RESTORE_SYNC_TAB_MESSAGE &&
     message.target === SERVICE_WORKER_TARGET
   );
 }

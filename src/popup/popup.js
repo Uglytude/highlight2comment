@@ -21,7 +21,9 @@ const SYNC_MESSAGE = "H2C_SYNC";
 const DELETE_NOTE_MESSAGE = "H2C_DELETE_NOTE";
 const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
 const GET_SYNC_TAB_STATE_MESSAGE = "H2C_GET_SYNC_TAB_STATE";
+const RESTORE_SYNC_TAB_MESSAGE = "H2C_RESTORE_SYNC_TAB";
 const SERVICE_WORKER_TARGET = "service-worker";
+const GUARDIAN_HINT_DISMISSED_KEY = "h2c_guardian_hint_dismissed";
 const NOTE_PREVIEW_LIMIT = 90;
 const DELETE_CONFIRM_WINDOW_MS = 3_000;
 const DELETE_ICON = "✕";
@@ -29,6 +31,7 @@ const DELETE_ICON = "✕";
 const elements = {};
 let syncInFlight = false;
 let isBusy = false;
+let guardianRecoveryNeeded = false;
 let pendingDeleteId = null;
 let pendingDeleteButton = null;
 let deleteConfirmTimer = null;
@@ -56,7 +59,10 @@ function bindElements() {
   elements.notesPanel = document.getElementById("notes-panel");
   elements.notesPanelClose = document.getElementById("notes-panel-close");
   elements.notesList = document.getElementById("notes-list");
+  elements.obsidianStateRow = document.getElementById("obsidian-state-row");
   elements.obsidianState = document.getElementById("obsidian-state");
+  elements.guardianHint = document.getElementById("guardian-hint");
+  elements.guardianHintDismiss = document.getElementById("guardian-hint-dismiss");
   elements.connectButton = document.getElementById("connect-button");
   elements.downloadButton = document.getElementById("download-button");
   elements.status = document.getElementById("status");
@@ -87,6 +93,7 @@ function bindEvents() {
   elements.noteCountToggle.addEventListener("keydown", handleCountKeydown);
   elements.notesPanelClose.addEventListener("click", closeNotesPanel);
   elements.connectButton.addEventListener("click", handleConnectClick);
+  elements.guardianHintDismiss.addEventListener("click", handleGuardianHintDismiss);
   elements.downloadButton.addEventListener("click", handleDownloadClick);
   elements.reauthorizeLink.addEventListener("click", handleReauthorizeClick);
   document.addEventListener("click", resetDeleteConfirmation);
@@ -322,15 +329,18 @@ function padTime(value) {
 }
 
 async function refreshSummary(showQuietStatus = false) {
-  const [count, pendingNotes, permissionState, syncTabAlive] = await Promise.all([
-    getNoteCount(),
-    getPendingNotes(),
-    getDirectoryPermissionState(),
-    getSyncTabIsAlive(),
-  ]);
+  const [count, pendingNotes, permissionState, syncTabState, hintState] =
+    await Promise.all([
+      getNoteCount(),
+      getPendingNotes(),
+      getDirectoryPermissionState(),
+      getSyncTabState(),
+      chrome.storage.local.get({ [GUARDIAN_HINT_DISMISSED_KEY]: false }),
+    ]);
 
   elements.noteCount.textContent = String(count);
-  await updateObsidianConnection(permissionState, syncTabAlive);
+  await updateObsidianConnection(permissionState, syncTabState);
+  updateGuardianHint(permissionState, syncTabState, hintState);
 
   if (showQuietStatus) {
     showQuietReconnectStatus(permissionState, pendingNotes.length);
@@ -340,6 +350,11 @@ async function refreshSummary(showQuietStatus = false) {
 async function handleConnectClick() {
   const permissionState = await getDirectoryPermissionState();
 
+  if (guardianRecoveryNeeded) {
+    await restoreAutoSync(permissionState);
+    return;
+  }
+
   await connectDirectory({
     action: authorizeDirectory,
     cancelLogAction: "obsidian_authorization_cancelled",
@@ -347,6 +362,57 @@ async function handleConnectClick() {
     startMessage: getConnectStartMessage(permissionState),
     successLogAction: "obsidian_directory_authorized",
   });
+}
+
+async function handleGuardianHintDismiss() {
+  elements.guardianHint.hidden = true;
+
+  try {
+    await chrome.storage.local.set({ [GUARDIAN_HINT_DISMISSED_KEY]: true });
+  } catch (error) {
+    elements.guardianHint.hidden = false;
+    await log("guardian_hint_dismiss_failed", {
+      message: getErrorMessage(error),
+    });
+    setStatus(getErrorMessage(error), true);
+  }
+}
+
+async function restoreAutoSync(permissionState) {
+  setStatus(t("restoringAutoSyncStatus"));
+  setBusy(true);
+
+  try {
+    await restorePermissionIfNeeded(permissionState);
+    const result = await requestGuardianRestore();
+    showSyncResult(result, false);
+  } catch (error) {
+    await handleGuardianRestoreError(error);
+  } finally {
+    setBusy(false);
+    await refreshSummary(false);
+  }
+}
+
+async function restorePermissionIfNeeded(permissionState) {
+  if (permissionState === "granted") {
+    return;
+  }
+
+  await authorizeDirectory();
+  await log("obsidian_directory_authorized", {
+    fileName: LOG_FILE_NAME,
+    reason: "guardian_restore",
+  });
+}
+
+async function handleGuardianRestoreError(error) {
+  const action = isAbortError(error)
+    ? "obsidian_authorization_cancelled"
+    : "sync_tab_restore_popup_failed";
+
+  await log(action, { message: getErrorMessage(error) });
+  setStatus(getErrorMessage(error), !isAbortError(error));
 }
 
 async function handleReauthorizeClick(event) {
@@ -481,16 +547,31 @@ async function ensureSyncTabAfterAuthorization() {
   }
 }
 
-async function getSyncTabIsAlive() {
+async function getSyncTabState() {
   try {
     const result = await sendServiceWorkerMessage({
       type: GET_SYNC_TAB_STATE_MESSAGE,
       target: SERVICE_WORKER_TARGET,
     });
-    return Boolean(result && result.ok && result.alive);
+
+    if (result && result.ok) {
+      return {
+        alive: result.alive === true,
+        suppressed: result.suppressed === true,
+      };
+    }
   } catch {
-    return false;
+    // Keep the neutral state when the service worker cannot be reached.
   }
+
+  return { alive: false, suppressed: false };
+}
+
+function requestGuardianRestore() {
+  return sendServiceWorkerMessage({
+    type: RESTORE_SYNC_TAB_MESSAGE,
+    target: SERVICE_WORKER_TARGET,
+  });
 }
 
 function sendServiceWorkerMessage(message) {
@@ -597,13 +678,26 @@ function setObsidianState(label) {
   elements.obsidianState.textContent = label;
 }
 
-async function updateObsidianConnection(permissionState, syncTabAlive) {
+async function updateObsidianConnection(permissionState, syncTabState) {
   const directoryName = await getDirectoryNameForState(permissionState);
+  guardianRecoveryNeeded = isGuardianPaused(syncTabState);
 
-  setObsidianState(permissionLabel(permissionState, syncTabAlive));
-  setConnectButtonLabel(permissionState);
-  setConnectedDirectory(permissionState, directoryName);
+  setObsidianState(permissionLabel(permissionState, syncTabState));
+  elements.obsidianStateRow.classList.toggle(
+    "guardian-paused",
+    guardianRecoveryNeeded,
+  );
+  setConnectButtonLabel(permissionState, guardianRecoveryNeeded);
+  setConnectedDirectory(permissionState, directoryName, guardianRecoveryNeeded);
   setBusy(isBusy);
+}
+
+function updateGuardianHint(permissionState, syncTabState, hintState) {
+  const wasDismissed = hintState[GUARDIAN_HINT_DISMISSED_KEY] === true;
+  const shouldShow =
+    permissionState === "granted" && syncTabState.alive && !wasDismissed;
+
+  elements.guardianHint.hidden = !shouldShow;
 }
 
 async function getDirectoryNameForState(permissionState) {
@@ -614,18 +708,20 @@ async function getDirectoryNameForState(permissionState) {
   return getConnectedDirectoryName();
 }
 
-function setConnectedDirectory(permissionState, directoryName) {
+function setConnectedDirectory(permissionState, directoryName, guardianPaused) {
   const isConnected = permissionState === "granted";
 
-  elements.connectButton.hidden = isConnected;
+  elements.connectButton.hidden = isConnected && !guardianPaused;
   elements.connectedDirectory.hidden = !isConnected;
   elements.connectedDirectorySummary.textContent = isConnected
     ? t("connectedDirectorySummary", [directoryName])
     : "";
 }
 
-function setConnectButtonLabel(permissionState) {
-  elements.connectButton.textContent = connectButtonLabel(permissionState);
+function setConnectButtonLabel(permissionState, guardianPaused) {
+  elements.connectButton.textContent = guardianPaused
+    ? t("restoreAutoSyncButton")
+    : connectButtonLabel(permissionState);
 }
 
 function setStatus(message, isError = false) {
@@ -633,9 +729,13 @@ function setStatus(message, isError = false) {
   elements.status.classList.toggle("error", isError);
 }
 
-function permissionLabel(permissionState, syncTabAlive) {
+function permissionLabel(permissionState, syncTabState) {
+  if (isGuardianPaused(syncTabState)) {
+    return t("obsidianStateSyncGuardianPaused");
+  }
+
   if (permissionState === "granted") {
-    return syncTabAlive
+    return syncTabState.alive
       ? t("obsidianStateSyncGuardianActive")
       : t("obsidianStateConnected");
   }
@@ -653,6 +753,10 @@ function permissionLabel(permissionState, syncTabAlive) {
   }
 
   return t("obsidianStateNotConnected");
+}
+
+function isGuardianPaused(syncTabState) {
+  return !syncTabState.alive && syncTabState.suppressed;
 }
 
 function connectButtonLabel(permissionState) {

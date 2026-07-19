@@ -57,7 +57,7 @@ function showVersion() {
 
 function applyStaticMessages() {
   document.documentElement.lang = getDocumentLanguage();
-  document.title = t("syncTabTitle");
+  document.title = t("syncTabDocumentTitle");
 
   for (const element of document.querySelectorAll("[data-i18n]")) {
     element.textContent = t(element.dataset.i18n);

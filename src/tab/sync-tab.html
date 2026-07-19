@@ -27,8 +27,9 @@
       }
 
       h1 {
-        font-size: 20px;
-        margin: 0 0 14px;
+        font-size: 28px;
+        line-height: 1.25;
+        margin: 0 0 10px;
       }
 
       #sync-status {
@@ -66,9 +67,9 @@
 
       .hint {
         color: #80868b;
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.5;
-        margin: 18px 0 0;
+        margin: 0 0 22px;
       }
 
       .extension-version {
@@ -82,13 +83,13 @@
   <body>
     <main>
       <h1 data-i18n="syncTabTitle"></h1>
+      <p class="hint" data-i18n="syncTabKeepOpenHint"></p>
       <p id="sync-status" role="status" aria-live="polite"></p>
       <button
         id="reconnect-button"
         type="button"
         data-i18n="reconnectAndWriteObsidianButton"
       ></button>
-      <p class="hint" data-i18n="syncTabKeepOpenHint"></p>
       <p id="extension-version" class="extension-version"></p>
     </main>
     <script type="module" src="./sync-tab.js"></script>

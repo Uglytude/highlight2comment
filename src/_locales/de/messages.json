@@ -35,6 +35,10 @@
     "message": "Automatische Synchronisierung aktiv",
     "description": "Obsidian connection state when the persistent sync tab is alive."
   },
+  "obsidianStateSyncGuardianPaused": {
+    "message": "Automatische Synchronisierung pausiert (Schutz-Tab wurde geschlossen)",
+    "description": "Amber Obsidian state shown after the user closes the automatic sync guardian tab."
+  },
   "obsidianStateNotConnected": {
     "message": "Nicht verbunden",
     "description": "Obsidian connection state when no folder is saved."
@@ -58,6 +62,10 @@
   "reconnectAndWriteObsidianButton": {
     "message": "Neu verbinden",
     "description": "Button label when Obsidian permission must be renewed."
+  },
+  "restoreAutoSyncButton": {
+    "message": "Auto-Sync wiederherstellen",
+    "description": "Primary popup button that recreates a guardian tab closed by the user."
   },
   "downloadAllButton": {
     "message": "Alle herunterladen",
@@ -84,6 +92,18 @@
   "connectedWritingPendingStatus": {
     "message": "Verbunden. Synchronisiere…",
     "description": "Status shown after connecting Obsidian before pending notes are appended."
+  },
+  "guardianHintMessage": {
+    "message": "Die automatische Synchronisierung ist aktiviert 📌 Ganz links in der Tableiste befindet sich jetzt ein kleiner Tab. Er schreibt im Hintergrund in deine Notizen; bitte schließe ihn nicht. Falls doch, wechselt die Erweiterung in den manuellen Modus. Du kannst die automatische Synchronisierung hier jederzeit wiederherstellen.",
+    "description": "One-time popup education card shown after automatic sync is connected."
+  },
+  "guardianHintDismissButton": {
+    "message": "Verstanden",
+    "description": "Button that permanently dismisses the one-time guardian tab education card."
+  },
+  "restoringAutoSyncStatus": {
+    "message": "Automatische Synchronisierung wird wiederhergestellt…",
+    "description": "Popup status shown while permission, the guardian tab, and pending sync are restored."
   },
   "noLocalNotesStatus": {
     "message": "Noch keine Notizen.",
@@ -156,8 +176,12 @@
     "description": "Fallback status for unexpected errors without a message."
   },
   "syncTabTitle": {
-    "message": "highlight2comment-Synchronisierung",
-    "description": "Title shown on the persistent automatic sync tab."
+    "message": "📌 Dieser kleine Tab schützt deine automatische Synchronisierung",
+    "description": "Friendly main heading shown on the persistent automatic sync tab."
+  },
+  "syncTabDocumentTitle": {
+    "message": "📌 highlight2comment · auto-sync",
+    "description": "Browser tab title for the persistent automatic sync guardian."
   },
   "syncTabStatusConnected": {
     "message": "Verbunden",
@@ -178,8 +202,8 @@
     }
   },
   "syncTabKeepOpenHint": {
-    "message": "Dieser Tab führt die automatische Synchronisierung aus. Bitte offen lassen; beim Schließen wechselt die Erweiterung in den manuellen Modus.",
-    "description": "Small explanation shown below the reconnect button on the persistent sync tab."
+    "message": "Wenn du ihn schließt, musst du deine Notizen manuell synchronisieren. Lass ihn einfach offen.",
+    "description": "Friendly explanation shown below the main heading on the persistent sync tab."
   },
   "extensionDisconnectedRefresh": {
     "message": "Erweiterung aktualisiert. Bitte Seite neu laden.",

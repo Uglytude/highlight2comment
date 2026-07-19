@@ -44,11 +44,20 @@
         <div id="notes-list" class="notes-list"></div>
       </section>
 
-      <section class="state" aria-live="polite">
+      <section id="obsidian-state-row" class="state" aria-live="polite">
         <div>
           <span class="label" data-i18n="obsidianLabel"></span>
           <span id="obsidian-state"></span>
         </div>
+      </section>
+
+      <section id="guardian-hint" class="guardian-hint" hidden>
+        <p data-i18n="guardianHintMessage"></p>
+        <button
+          id="guardian-hint-dismiss"
+          type="button"
+          data-i18n="guardianHintDismissButton"
+        ></button>
       </section>
 
       <div class="actions">

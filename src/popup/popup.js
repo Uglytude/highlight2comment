@@ -6,6 +6,7 @@ import {
   getNotes,
   getPendingNotes,
   NOTES_KEY,
+  WRITTEN_NOTE_IDS_KEY,
 } from "../lib/storage.js";
 import {
   authorizeDirectory,
@@ -17,14 +18,20 @@ import {
 } from "../lib/obsidian-writer.js";
 
 const SYNC_MESSAGE = "H2C_SYNC";
+const DELETE_NOTE_MESSAGE = "H2C_DELETE_NOTE";
 const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
 const GET_SYNC_TAB_STATE_MESSAGE = "H2C_GET_SYNC_TAB_STATE";
 const SERVICE_WORKER_TARGET = "service-worker";
 const NOTE_PREVIEW_LIMIT = 90;
+const DELETE_CONFIRM_WINDOW_MS = 3_000;
+const DELETE_ICON = "✕";
 
 const elements = {};
 let syncInFlight = false;
 let isBusy = false;
+let pendingDeleteId = null;
+let pendingDeleteButton = null;
+let deleteConfirmTimer = null;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -82,6 +89,7 @@ function bindEvents() {
   elements.connectButton.addEventListener("click", handleConnectClick);
   elements.downloadButton.addEventListener("click", handleDownloadClick);
   elements.reauthorizeLink.addEventListener("click", handleReauthorizeClick);
+  document.addEventListener("click", resetDeleteConfirmation);
   chrome.storage.onChanged.addListener(handleStorageChanged);
 }
 
@@ -92,7 +100,10 @@ function handleStorageChanged(changes, areaName) {
 
   refreshSummary(true);
 
-  if (!elements.notesPanel.hidden) {
+  if (
+    !elements.notesPanel.hidden &&
+    (changes[NOTES_KEY] || changes[WRITTEN_NOTE_IDS_KEY])
+  ) {
     refreshNotesList();
   }
 
@@ -120,6 +131,7 @@ async function toggleNotesPanel() {
 }
 
 function closeNotesPanel() {
+  resetDeleteConfirmation();
   setNotesPanelExpanded(false);
   elements.noteCountToggle.focus();
 }
@@ -136,6 +148,7 @@ async function refreshNotesList() {
 }
 
 function renderNotesList(notes, pendingIds) {
+  resetDeleteConfirmation();
   elements.notesList.replaceChildren();
   const sortedNotes = sortNotesLatestFirst(notes);
 
@@ -156,6 +169,7 @@ function createNotesEmptyState() {
 function createNoteItem(note, isPending) {
   const item = document.createElement("article");
   item.className = "note-item";
+  item.appendChild(createDeleteButton(note.id));
   item.appendChild(createTextElement("p", "note-text", truncateText(note.text)));
 
   if (note.comment) {
@@ -164,6 +178,79 @@ function createNoteItem(note, isPending) {
 
   item.appendChild(createNoteMeta(note, isPending));
   return item;
+}
+
+function createDeleteButton(noteId) {
+  const button = document.createElement("button");
+  button.className = "note-delete-button";
+  button.type = "button";
+  button.textContent = DELETE_ICON;
+  button.dataset.noteId = noteId;
+  button.setAttribute("aria-label", t("deleteAction"));
+  button.title = t("deleteAction");
+  button.addEventListener("click", (event) => handleDeleteClick(event, noteId));
+  return button;
+}
+
+async function handleDeleteClick(event, noteId) {
+  event.stopPropagation();
+  const button = event.currentTarget;
+
+  if (pendingDeleteId !== noteId) {
+    armDeleteConfirmation(button, noteId);
+    return;
+  }
+
+  resetDeleteConfirmation();
+  button.disabled = true;
+
+  try {
+    const result = await requestDeleteNote(noteId);
+
+    if (!result || !result.ok) {
+      throw new Error(result?.error || "unknownErrorStatus");
+    }
+  } catch (error) {
+    button.disabled = false;
+    setStatus(getErrorMessage(error), true);
+  }
+}
+
+function requestDeleteNote(noteId) {
+  return sendServiceWorkerMessage({
+    type: DELETE_NOTE_MESSAGE,
+    target: SERVICE_WORKER_TARGET,
+    noteId,
+  });
+}
+
+function armDeleteConfirmation(button, noteId) {
+  resetDeleteConfirmation();
+  pendingDeleteId = noteId;
+  pendingDeleteButton = button;
+  button.classList.add("is-confirming");
+  button.textContent = t("deleteConfirm");
+  button.setAttribute("aria-label", t("deleteConfirm"));
+  button.title = t("deleteConfirm");
+  deleteConfirmTimer = window.setTimeout(
+    resetDeleteConfirmation,
+    DELETE_CONFIRM_WINDOW_MS,
+  );
+}
+
+function resetDeleteConfirmation() {
+  window.clearTimeout(deleteConfirmTimer);
+  deleteConfirmTimer = null;
+  pendingDeleteId = null;
+
+  if (pendingDeleteButton?.isConnected) {
+    pendingDeleteButton.classList.remove("is-confirming");
+    pendingDeleteButton.textContent = DELETE_ICON;
+    pendingDeleteButton.setAttribute("aria-label", t("deleteAction"));
+    pendingDeleteButton.title = t("deleteAction");
+  }
+
+  pendingDeleteButton = null;
 }
 
 function createNoteComment(comment) {

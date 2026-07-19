@@ -213,6 +213,22 @@
     "message": "Speichern fehlgeschlagen",
     "description": "Fallback content script status when saving a note fails without a specific error."
   },
+  "savedFlash": {
+    "message": "Gespeichert",
+    "description": "Brief confirmation shown after a note is saved locally."
+  },
+  "duplicateFlash": {
+    "message": "Bereits gespeichert",
+    "description": "Brief confirmation shown when an identical recent note is skipped."
+  },
+  "deleteConfirm": {
+    "message": "Löschen?",
+    "description": "Temporary second-click confirmation label for deleting a local note."
+  },
+  "deleteAction": {
+    "message": "Notiz löschen",
+    "description": "Tooltip and ARIA label for deleting a local note."
+  },
   "logCommentPrefix": {
     "message": "Kommentar: ",
     "description": "Prefix written before a saved comment in exported Markdown."

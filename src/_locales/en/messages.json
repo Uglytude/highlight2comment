@@ -213,6 +213,22 @@
     "message": "Save failed",
     "description": "Fallback content script status when saving a note fails without a specific error."
   },
+  "savedFlash": {
+    "message": "Saved",
+    "description": "Brief confirmation shown after a note is saved locally."
+  },
+  "duplicateFlash": {
+    "message": "Already saved",
+    "description": "Brief confirmation shown when an identical recent note is skipped."
+  },
+  "deleteConfirm": {
+    "message": "Delete?",
+    "description": "Temporary second-click confirmation label for deleting a local note."
+  },
+  "deleteAction": {
+    "message": "Delete note",
+    "description": "Tooltip and ARIA label for deleting a local note."
+  },
   "logCommentPrefix": {
     "message": "Comment: ",
     "description": "Prefix written before a saved comment in exported Markdown."

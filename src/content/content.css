@@ -175,6 +175,47 @@
   display: none;
 }
 
+.h2c-root.h2c-confirming > .h2c-action-bar,
+.h2c-root.h2c-confirming > .h2c-button-status,
+.h2c-root.h2c-confirming > .h2c-editor {
+  display: none;
+}
+
+.h2c-confirmation {
+  all: initial;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #86b994;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(32, 33, 36, 0.12);
+  color: #188038;
+  display: inline-flex;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  gap: 5px;
+  line-height: 1;
+  min-height: 32px;
+  opacity: 1;
+  padding: 0 10px 0 12px;
+  transition: opacity 160ms ease;
+  white-space: nowrap;
+}
+
+.h2c-confirmation[hidden] {
+  display: none;
+}
+
+.h2c-confirmation.h2c-fade-out {
+  opacity: 0;
+}
+
+.h2c-confirmation-icon,
+.h2c-confirmation-icon svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
 @keyframes h2c-shake {
   0% {
     transform: translateX(0);
@@ -204,6 +245,9 @@
 .h2c-capsule,
 .h2c-textarea,
 .h2c-save-button,
-.h2c-status {
+.h2c-status,
+.h2c-confirmation,
+.h2c-confirmation-label,
+.h2c-confirmation-icon {
   box-sizing: border-box;
 }

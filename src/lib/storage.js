@@ -22,6 +22,21 @@ export async function getNoteCount() {
   return notes.length;
 }
 
+export async function findRecentDuplicate(note, windowMs) {
+  const candidate = normalizeNote(note);
+  const notes = await getNotes();
+  const now = Date.now();
+  const recentWindowMs = Math.max(0, Number(windowMs) || 0);
+
+  return (
+    notes.find(
+      (existingNote) =>
+        isWithinWindow(existingNote.ts, now, recentWindowMs) &&
+        hasSameSavedContent(existingNote, candidate),
+    ) || null
+  );
+}
+
 export async function getWrittenNoteIds() {
   const data = await chrome.storage.local.get({ [WRITTEN_NOTE_IDS_KEY]: [] });
   const ids = data[WRITTEN_NOTE_IDS_KEY];
@@ -50,6 +65,29 @@ export async function markNotesWritten(noteIds) {
   await chrome.storage.local.set({
     [WRITTEN_NOTE_IDS_KEY]: Array.from(nextIds),
   });
+}
+
+export async function deleteNote(id) {
+  const noteId = String(id || "");
+  const [notes, writtenIds] = await Promise.all([getNotes(), getWrittenNoteIds()]);
+  const nextNotes = notes.filter((note) => note.id !== noteId);
+  const nextWrittenIds = writtenIds.filter((writtenId) => writtenId !== noteId);
+
+  await chrome.storage.local.set({
+    [NOTES_KEY]: nextNotes,
+    [WRITTEN_NOTE_IDS_KEY]: nextWrittenIds,
+  });
+  return nextNotes.length !== notes.length;
+}
+
+function isWithinWindow(timestamp, now, windowMs) {
+  const savedAt = Date.parse(timestamp);
+  const age = now - savedAt;
+  return Number.isFinite(savedAt) && age >= 0 && age <= windowMs;
+}
+
+function hasSameSavedContent(left, right) {
+  return left.url === right.url && left.text === right.text && left.comment === right.comment;
 }
 
 function normalizeNote(note) {

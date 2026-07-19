@@ -2,6 +2,8 @@
   const SAVE_NOTE_MESSAGE = "H2C_SAVE_NOTE";
   const DISCONNECTED_MESSAGE = getMessage("extensionDisconnectedRefresh");
   const SAVE_FAILED_MESSAGE = getMessage("saveFailedStatus");
+  const SAVED_FLASH_MESSAGE = getMessage("savedFlash");
+  const DUPLICATE_FLASH_MESSAGE = getMessage("duplicateFlash");
   const WIDGET_CLASS = "h2c-root";
   const ACTION_BUTTON_SIZE = 26;
   const ACTION_BAR_PADDING = 3;
@@ -14,6 +16,8 @@
   const EDITOR_HEIGHT = 46;
   const COMMENT_INPUT_MAX_HEIGHT = 88;
   const EDITOR_ERROR_DURATION_MS = 800;
+  const CONFIRMATION_VISIBLE_MS = 1000;
+  const CONFIRMATION_FADE_MS = 160;
   const HIGHLIGHT_ICON_SVG = `
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
       <path d="M3.5 8.2L6.35 11L12.5 4.75" fill="none" stroke="#202124" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -29,12 +33,20 @@
       <path d="M3 7.15L5.7 9.75L11 4.25" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `;
+  const CONFIRMATION_ICON_SVG = `
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+      <path d="M2.75 7.1L5.55 9.8L11.2 4.15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
 
   let buttonRoot = null;
   let editorRoot = null;
   let outsideEditorTimer = null;
   let isOutsideEditorListenerAttached = false;
   let selectionTimer = null;
+  let confirmationTimer = null;
+  let confirmationFadeTimer = null;
+  let activeConfirmationRoot = null;
   let selectedText = "";
   let selectedRect = null;
 
@@ -145,6 +157,7 @@
   function hideButton() {
     window.clearTimeout(selectionTimer);
     selectionTimer = null;
+    cancelConfirmationFor(buttonRoot);
 
     if (buttonRoot) {
       resetButtonRoot(buttonRoot);
@@ -178,7 +191,7 @@
     status.setAttribute("aria-live", "polite");
 
     actionBar.append(highlightButton, commentButton);
-    root.append(actionBar, status);
+    root.append(actionBar, status, createConfirmation());
     return root;
   }
 
@@ -211,9 +224,8 @@
 
     try {
       const note = createNote(selectedText, "");
-      await sendSaveNote(note);
-      hideButton();
-      window.getSelection().removeAllRanges();
+      const response = await sendSaveNote(note);
+      showSaveConfirmation(buttonRoot, getConfirmationMessage(response));
     } catch (error) {
       button.disabled = false;
       setButtonStatus(error.message || String(error));
@@ -276,8 +288,24 @@
 
     capsule.append(textarea, saveButton);
     editor.append(capsule, status);
-    root.appendChild(editor);
+    root.append(editor, createConfirmation());
     return root;
+  }
+
+  function createConfirmation() {
+    const confirmation = document.createElement("div");
+    confirmation.className = "h2c-confirmation";
+    confirmation.setAttribute("role", "status");
+    confirmation.setAttribute("aria-live", "polite");
+    confirmation.hidden = true;
+
+    const label = document.createElement("span");
+    label.className = "h2c-confirmation-label";
+    const icon = document.createElement("span");
+    icon.className = "h2c-confirmation-icon";
+    icon.innerHTML = CONFIRMATION_ICON_SVG;
+    confirmation.append(label, icon);
+    return confirmation;
   }
 
   function createSaveButton() {
@@ -344,9 +372,8 @@
 
     try {
       const note = createNote(selectedText, comment);
-      await sendSaveNote(note);
-      closeEditor();
-      window.getSelection().removeAllRanges();
+      const response = await sendSaveNote(note);
+      showSaveConfirmation(root, getConfirmationMessage(response));
     } catch (error) {
       saveButton.disabled = false;
       setEditorStatus(root, error.message || String(error));
@@ -407,6 +434,126 @@
     });
   }
 
+  function getConfirmationMessage(response) {
+    return response.duplicate ? DUPLICATE_FLASH_MESSAGE : SAVED_FLASH_MESSAGE;
+  }
+
+  function showSaveConfirmation(root, message) {
+    if (!canShowConfirmation(root)) {
+      clearSavedSelection();
+      return;
+    }
+
+    hideActiveConfirmation(false);
+    removeOutsideEditorListener();
+    activeConfirmationRoot = root;
+    setConfirmationVisible(root, message);
+    document.addEventListener("mousedown", handleConfirmationOutsideMouseDown, true);
+    confirmationTimer = window.setTimeout(startConfirmationFade, CONFIRMATION_VISIBLE_MS);
+  }
+
+  function canShowConfirmation(root) {
+    if (!root || !root.isConnected) {
+      return false;
+    }
+
+    return root !== buttonRoot || root.style.display !== "none";
+  }
+
+  function setConfirmationVisible(root, message) {
+    const confirmation = root.querySelector(".h2c-confirmation");
+    const label = confirmation ? confirmation.querySelector(".h2c-confirmation-label") : null;
+
+    if (!confirmation || !label) {
+      return;
+    }
+
+    label.textContent = message;
+    confirmation.classList.remove("h2c-fade-out");
+    confirmation.hidden = false;
+    root.classList.add("h2c-confirming");
+  }
+
+  function startConfirmationFade() {
+    const confirmation = activeConfirmationRoot?.querySelector(".h2c-confirmation");
+
+    if (!confirmation) {
+      hideActiveConfirmation(true);
+      return;
+    }
+
+    confirmation.classList.add("h2c-fade-out");
+    confirmationFadeTimer = window.setTimeout(
+      () => hideActiveConfirmation(true),
+      CONFIRMATION_FADE_MS,
+    );
+  }
+
+  function handleConfirmationOutsideMouseDown(event) {
+    if (activeConfirmationRoot && !isInsideWidget(event.target)) {
+      hideActiveConfirmation(true);
+    }
+  }
+
+  function hideActiveConfirmation(clearSelection) {
+    const root = clearConfirmationState();
+
+    if (root === editorRoot) {
+      closeEditor();
+    } else if (root === buttonRoot) {
+      hideButton();
+    }
+
+    if (clearSelection) {
+      clearSavedSelection();
+    }
+  }
+
+  function clearConfirmationState() {
+    const root = activeConfirmationRoot;
+
+    window.clearTimeout(confirmationTimer);
+    window.clearTimeout(confirmationFadeTimer);
+    confirmationTimer = null;
+    confirmationFadeTimer = null;
+    activeConfirmationRoot = null;
+    document.removeEventListener("mousedown", handleConfirmationOutsideMouseDown, true);
+
+    if (root) {
+      resetConfirmation(root);
+    }
+
+    return root;
+  }
+
+  function cancelConfirmationFor(root) {
+    if (activeConfirmationRoot === root) {
+      clearConfirmationState();
+    }
+  }
+
+  function resetConfirmation(root) {
+    const confirmation = root.querySelector(".h2c-confirmation");
+
+    root.classList.remove("h2c-confirming");
+
+    if (confirmation) {
+      confirmation.hidden = true;
+      confirmation.classList.remove("h2c-fade-out");
+    }
+  }
+
+  function clearSavedSelection() {
+    const selection = window.getSelection();
+
+    if (selection) {
+      selection.removeAllRanges();
+    }
+
+    selectedText = "";
+    selectedRect = null;
+  }
+
   function createNote(text, comment) {
     const now = new Date();
 
@@ -459,6 +606,7 @@
   }
 
   function closeEditor() {
+    cancelConfirmationFor(editorRoot);
     removeOutsideEditorListener();
 
     if (editorRoot) {
@@ -536,6 +684,7 @@
     const buttons = root.querySelectorAll(".h2c-action-button");
 
     setButtonActionsVisible(root, true);
+    resetConfirmation(root);
 
     if (status) {
       status.textContent = "";

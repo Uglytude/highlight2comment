@@ -213,6 +213,22 @@
     "message": "保存失败",
     "description": "Fallback content script status when saving a note fails without a specific error."
   },
+  "savedFlash": {
+    "message": "已保存",
+    "description": "Brief confirmation shown after a note is saved locally."
+  },
+  "duplicateFlash": {
+    "message": "已经保存过",
+    "description": "Brief confirmation shown when an identical recent note is skipped."
+  },
+  "deleteConfirm": {
+    "message": "删除？",
+    "description": "Temporary second-click confirmation label for deleting a local note."
+  },
+  "deleteAction": {
+    "message": "删除笔记",
+    "description": "Tooltip and ARIA label for deleting a local note."
+  },
   "logCommentPrefix": {
     "message": "评:",
     "description": "Prefix written before a saved comment in exported Markdown."

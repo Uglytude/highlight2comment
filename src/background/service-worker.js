@@ -1,9 +1,16 @@
 import { log } from "../lib/logger.js";
 import { refreshBadge } from "../lib/badge.js";
-import { getPendingNotes, markNotesWritten, saveNote } from "../lib/storage.js";
+import {
+  deleteNote,
+  findRecentDuplicate,
+  getPendingNotes,
+  markNotesWritten,
+  saveNote,
+} from "../lib/storage.js";
 import { getMessage as t } from "../lib/i18n.js";
 
 const SAVE_NOTE_MESSAGE = "H2C_SAVE_NOTE";
+const DELETE_NOTE_MESSAGE = "H2C_DELETE_NOTE";
 const SYNC_MESSAGE = "H2C_SYNC";
 const WRITE_MESSAGE = "H2C_WRITE";
 const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
@@ -18,8 +25,10 @@ const SYNC_TAB_SUPPRESSED_KEY = "syncTabSuppressed";
 const NEEDS_AUTH_LOGGED_KEY = "needsAuthLogged";
 const OFFSCREEN_REASON = "BLOBS";
 const OFFSCREEN_JUSTIFICATION = "Keep folder permission alive and sync notes";
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 
-let saveQueue = Promise.resolve();
+let noteMutationQueue = Promise.resolve();
+let deleteQueue = Promise.resolve();
 let creatingSyncTab = null;
 let creatingOffscreenDocument = null;
 let activeSync = null;
@@ -44,6 +53,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message && message.type === DELETE_NOTE_MESSAGE) {
+    handleDeleteNote(message.noteId).then(sendResponse);
+    return true;
+  }
+
   if (isEnsureSyncTabMessage(message)) {
     handleEnsureSyncTabMessage(message).then(sendResponse);
     return true;
@@ -64,7 +78,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function handleSaveNote(note, sender) {
   try {
-    const savedNote = await queueSaveNote(note);
+    const result = await queueSaveNote(note);
+
+    if (result.duplicate) {
+      await logDuplicateSkipped(result.note, note, sender);
+      return { ok: true, duplicate: true };
+    }
+
+    const savedNote = result.note;
 
     await logSavedNote(savedNote, sender);
     await refreshBadge("note_saved");
@@ -96,14 +117,70 @@ function logSavedNote(savedNote, sender) {
   });
 }
 
+function logDuplicateSkipped(existingNote, skippedNote, sender) {
+  return log("note_duplicate_skipped", {
+    existingNoteId: existingNote.id,
+    skippedNoteId: skippedNote.id,
+    url: existingNote.url,
+    tabId: sender.tab ? sender.tab.id : null,
+  });
+}
+
 function queueSaveNote(note) {
-  const savePromise = saveQueue.then(
-    () => saveNote(note),
-    () => saveNote(note),
+  return queueNoteMutation(() => saveNoteUnlessDuplicate(note));
+}
+
+function queueNoteMutation(operation) {
+  const mutationPromise = noteMutationQueue.then(operation, operation);
+
+  noteMutationQueue = mutationPromise.catch(() => {});
+  return mutationPromise;
+}
+
+async function saveNoteUnlessDuplicate(note) {
+  const duplicateNote = await findRecentDuplicate(note, DUPLICATE_WINDOW_MS);
+
+  if (duplicateNote) {
+    return { duplicate: true, note: duplicateNote };
+  }
+
+  return { duplicate: false, note: await saveNote(note) };
+}
+
+async function handleDeleteNote(noteId) {
+  try {
+    const deleted = await queueDeleteNote(noteId);
+
+    if (deleted) {
+      await log("note_deleted", { id: noteId });
+    }
+
+    return { ok: true, deleted };
+  } catch (error) {
+    await log("note_delete_failed", {
+      id: noteId,
+      message: getErrorMessage(error),
+    });
+    return { ok: false, error: getErrorMessage(error) };
+  }
+}
+
+function queueDeleteNote(noteId) {
+  const syncToWaitFor = activeSync;
+  const deletePromise = queueNoteMutation(() =>
+    deleteNoteAfterSync(noteId, syncToWaitFor),
   );
 
-  saveQueue = savePromise.catch(() => {});
-  return savePromise;
+  deleteQueue = deletePromise.catch(() => {});
+  return deletePromise;
+}
+
+async function deleteNoteAfterSync(noteId, syncToWaitFor) {
+  if (syncToWaitFor) {
+    await syncToWaitFor.catch(() => {});
+  }
+
+  return deleteNote(noteId);
 }
 
 async function handleInstalled() {
@@ -276,10 +353,16 @@ async function requestSync(reason) {
     return runningSync;
   }
 
-  activeSync = runSyncLoop(reason).finally(() => {
+  const pendingDeletes = deleteQueue;
+  activeSync = runSyncAfterDeletes(reason, pendingDeletes).finally(() => {
     activeSync = null;
   });
   return activeSync;
+}
+
+async function runSyncAfterDeletes(reason, pendingDeletes) {
+  await pendingDeletes;
+  return runSyncLoop(reason);
 }
 
 async function runSyncLoop(reason) {

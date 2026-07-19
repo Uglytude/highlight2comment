@@ -31,6 +31,10 @@
     "message": "Verbunden",
     "description": "Obsidian connection state when write permission is granted."
   },
+  "obsidianStateSyncGuardianActive": {
+    "message": "Automatische Synchronisierung aktiv",
+    "description": "Obsidian connection state when the persistent sync tab is alive."
+  },
   "obsidianStateNotConnected": {
     "message": "Nicht verbunden",
     "description": "Obsidian connection state when no folder is saved."
@@ -103,6 +107,16 @@
     "message": "Klicke „Neu verbinden“, um weiterzuschreiben. Notizen bleiben im Browser gesichert.",
     "description": "Status shown when Obsidian permission was denied."
   },
+  "obsidianReconnectPendingStatus": {
+    "message": "Obsidian neu verbinden · $COUNT$ Notizen warten; lokal sicher gespeichert.",
+    "description": "Quiet popup status shown when Obsidian needs authorization and local notes are queued.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "noPendingNotesStatus": {
     "message": "Nichts zu synchronisieren.",
     "description": "Status shown when all local notes are already written to Obsidian."
@@ -140,6 +154,32 @@
   "unknownErrorStatus": {
     "message": "Ein unbekannter Fehler ist aufgetreten.",
     "description": "Fallback status for unexpected errors without a message."
+  },
+  "syncTabTitle": {
+    "message": "highlight2comment-Synchronisierung",
+    "description": "Title shown on the persistent automatic sync tab."
+  },
+  "syncTabStatusConnected": {
+    "message": "Verbunden",
+    "description": "Status shown on the sync tab when folder permission is active and nothing is pending."
+  },
+  "syncTabStatusReconnect": {
+    "message": "Neu verbinden nötig",
+    "description": "Status shown on the sync tab when folder permission needs a user gesture."
+  },
+  "syncTabStatusPending": {
+    "message": "$COUNT$ Notizen warten",
+    "description": "Status shown on the sync tab for the number of notes waiting to be written.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "syncTabKeepOpenHint": {
+    "message": "Dieser Tab führt die automatische Synchronisierung aus. Bitte offen lassen; beim Schließen wechselt die Erweiterung in den manuellen Modus.",
+    "description": "Small explanation shown below the reconnect button on the persistent sync tab."
   },
   "extensionDisconnectedRefresh": {
     "message": "Erweiterung aktualisiert. Bitte Seite neu laden.",

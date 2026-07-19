@@ -31,6 +31,10 @@
     "message": "已连接",
     "description": "Obsidian connection state when write permission is granted."
   },
+  "obsidianStateSyncGuardianActive": {
+    "message": "自动同步守护中",
+    "description": "Obsidian connection state when the persistent sync tab is alive."
+  },
   "obsidianStateNotConnected": {
     "message": "未连接",
     "description": "Obsidian connection state when no folder is saved."
@@ -103,6 +107,16 @@
     "message": "点「重新连接」继续写入;笔记安全存在浏览器里。",
     "description": "Status shown when Obsidian permission was denied."
   },
+  "obsidianReconnectPendingStatus": {
+    "message": "Obsidian 待重连 · $COUNT$ 条待同步,本地已安全保存",
+    "description": "Quiet popup status shown when Obsidian needs authorization and local notes are queued.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "noPendingNotesStatus": {
     "message": "没有待同步笔记。",
     "description": "Status shown when all local notes are already written to Obsidian."
@@ -140,6 +154,32 @@
   "unknownErrorStatus": {
     "message": "发生未知错误。",
     "description": "Fallback status for unexpected errors without a message."
+  },
+  "syncTabTitle": {
+    "message": "highlight2comment 自动同步",
+    "description": "Title shown on the persistent automatic sync tab."
+  },
+  "syncTabStatusConnected": {
+    "message": "已连接",
+    "description": "Status shown on the sync tab when folder permission is active and nothing is pending."
+  },
+  "syncTabStatusReconnect": {
+    "message": "待重连",
+    "description": "Status shown on the sync tab when folder permission needs a user gesture."
+  },
+  "syncTabStatusPending": {
+    "message": "$COUNT$ 条待同步",
+    "description": "Status shown on the sync tab for the number of notes waiting to be written.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "syncTabKeepOpenHint": {
+    "message": "这个标签页负责自动同步,请别关闭;关了插件会退回手动模式。",
+    "description": "Small explanation shown below the reconnect button on the persistent sync tab."
   },
   "extensionDisconnectedRefresh": {
     "message": "插件刚更新过,请刷新本页面再试。",

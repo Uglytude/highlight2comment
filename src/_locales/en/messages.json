@@ -31,6 +31,10 @@
     "message": "Connected",
     "description": "Obsidian connection state when write permission is granted."
   },
+  "obsidianStateSyncGuardianActive": {
+    "message": "Auto-sync guardian active",
+    "description": "Obsidian connection state when the persistent sync tab is alive."
+  },
   "obsidianStateNotConnected": {
     "message": "Not connected",
     "description": "Obsidian connection state when no folder is saved."
@@ -103,6 +107,16 @@
     "message": "Click Reconnect to keep writing. Your notes are safe in the browser.",
     "description": "Status shown when Obsidian permission was denied."
   },
+  "obsidianReconnectPendingStatus": {
+    "message": "Obsidian needs reconnecting · $COUNT$ notes pending; locally saved safely.",
+    "description": "Quiet popup status shown when Obsidian needs authorization and local notes are queued.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "noPendingNotesStatus": {
     "message": "Nothing to sync.",
     "description": "Status shown when all local notes are already written to Obsidian."
@@ -140,6 +154,32 @@
   "unknownErrorStatus": {
     "message": "An unknown error occurred.",
     "description": "Fallback status for unexpected errors without a message."
+  },
+  "syncTabTitle": {
+    "message": "highlight2comment sync",
+    "description": "Title shown on the persistent automatic sync tab."
+  },
+  "syncTabStatusConnected": {
+    "message": "Connected",
+    "description": "Status shown on the sync tab when folder permission is active and nothing is pending."
+  },
+  "syncTabStatusReconnect": {
+    "message": "Reconnect needed",
+    "description": "Status shown on the sync tab when folder permission needs a user gesture."
+  },
+  "syncTabStatusPending": {
+    "message": "$COUNT$ notes pending",
+    "description": "Status shown on the sync tab for the number of notes waiting to be written.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "syncTabKeepOpenHint": {
+    "message": "This tab runs automatic sync. Please leave it open; closing it switches the extension to manual mode.",
+    "description": "Small explanation shown below the reconnect button on the persistent sync tab."
   },
   "extensionDisconnectedRefresh": {
     "message": "Extension updated. Refresh this page.",

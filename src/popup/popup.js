@@ -17,6 +17,8 @@ import {
 } from "../lib/obsidian-writer.js";
 
 const SYNC_MESSAGE = "H2C_SYNC";
+const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
+const GET_SYNC_TAB_STATE_MESSAGE = "H2C_GET_SYNC_TAB_STATE";
 const SERVICE_WORKER_TARGET = "service-worker";
 const NOTE_PREVIEW_LIMIT = 90;
 
@@ -36,7 +38,7 @@ async function init() {
     setObsidianState(t("obsidianStateUnsupported"));
   }
 
-  await refreshSummary();
+  await refreshSummary(true);
   await tryAutoSyncPendingNotes();
 }
 
@@ -82,7 +84,7 @@ function handleStorageChanged(changes, areaName) {
     return;
   }
 
-  refreshSummary();
+  refreshSummary(true);
 
   if (!elements.notesPanel.hidden) {
     refreshNotesList();
@@ -226,14 +228,20 @@ function padTime(value) {
   return String(value).padStart(2, "0");
 }
 
-async function refreshSummary() {
-  const [count, permissionState] = await Promise.all([
+async function refreshSummary(showQuietStatus = false) {
+  const [count, pendingNotes, permissionState, syncTabAlive] = await Promise.all([
     getNoteCount(),
+    getPendingNotes(),
     getDirectoryPermissionState(),
+    getSyncTabIsAlive(),
   ]);
 
   elements.noteCount.textContent = String(count);
-  await updateObsidianConnection(permissionState);
+  await updateObsidianConnection(permissionState, syncTabAlive);
+
+  if (showQuietStatus) {
+    showQuietReconnectStatus(permissionState, pendingNotes.length);
+  }
 }
 
 async function handleConnectClick() {
@@ -273,6 +281,7 @@ async function connectDirectory(options) {
     await log(options.successLogAction, {
       fileName: LOG_FILE_NAME,
     });
+    await ensureSyncTabAfterAuthorization();
     setStatus(t("connectedWritingPendingStatus"));
     await syncPendingNotes(false);
   } catch (error) {
@@ -290,7 +299,7 @@ async function connectDirectory(options) {
     setStatus(getErrorMessage(error), true);
   } finally {
     setBusy(false);
-    await refreshSummary();
+    await refreshSummary(false);
   }
 }
 
@@ -351,44 +360,70 @@ async function syncPendingNotes(silent) {
     await log("obsidian_sync_popup_request_failed", {
       message: getErrorMessage(error),
     });
-    setStatus(getErrorMessage(error), true);
+    setStatus(getErrorMessage(error), !silent);
     return null;
   } finally {
     syncInFlight = false;
-    await refreshSummary();
+    await refreshSummary(false);
   }
 }
 
 function requestServiceWorkerSync(reason) {
+  return sendServiceWorkerMessage({
+    type: SYNC_MESSAGE,
+    target: SERVICE_WORKER_TARGET,
+    reason,
+  });
+}
+
+async function ensureSyncTabAfterAuthorization() {
+  const result = await sendServiceWorkerMessage({
+    type: ENSURE_SYNC_TAB_MESSAGE,
+    target: SERVICE_WORKER_TARGET,
+    reason: "popup_authorized",
+  });
+
+  if (!result || !result.ok) {
+    throw new Error(result?.error || "unknownErrorStatus");
+  }
+}
+
+async function getSyncTabIsAlive() {
+  try {
+    const result = await sendServiceWorkerMessage({
+      type: GET_SYNC_TAB_STATE_MESSAGE,
+      target: SERVICE_WORKER_TARGET,
+    });
+    return Boolean(result && result.ok && result.alive);
+  } catch {
+    return false;
+  }
+}
+
+function sendServiceWorkerMessage(message) {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      {
-        type: SYNC_MESSAGE,
-        target: SERVICE_WORKER_TARGET,
-        reason,
-      },
-      (response) => {
-        const runtimeError = chrome.runtime.lastError;
+    chrome.runtime.sendMessage(message, (response) => {
+      const runtimeError = chrome.runtime.lastError;
 
-        if (runtimeError) {
-          reject(new Error(runtimeError.message || String(runtimeError)));
-          return;
-        }
+      if (runtimeError) {
+        reject(new Error(runtimeError.message || String(runtimeError)));
+        return;
+      }
 
-        resolve(response);
-      },
-    );
+      resolve(response);
+    });
   });
 }
 
 function showSyncResult(result, silent) {
   if (!result) {
-    setStatus(t("unknownErrorStatus"), true);
+    setStatus(t("unknownErrorStatus"), !silent);
     return;
   }
 
   if (!result.ok) {
-    setStatus(result.error || t("unknownErrorStatus"), true);
+    const message = result.error ? t(result.error) : t("unknownErrorStatus");
+    setStatus(message, !silent);
     return;
   }
 
@@ -410,7 +445,7 @@ function showSyncResult(result, silent) {
   }
 
   if (result.status === "needsAuth") {
-    showNeedsAuthStatus(result.permissionState, silent);
+    showNeedsAuthStatus(result.pendingCount || 0, silent);
     return;
   }
 
@@ -419,27 +454,27 @@ function showSyncResult(result, silent) {
   }
 }
 
-function showNeedsAuthStatus(permissionState, silent) {
-  if (permissionState === "missing") {
-    if (!silent) {
-      setStatus(t("obsidianFolderNotConnectedError"), true);
-    }
+function showNeedsAuthStatus(pendingCount, silent) {
+  setStatus(
+    t("obsidianReconnectPendingStatus", [String(pendingCount)]),
+    !silent,
+  );
+}
+
+function showQuietReconnectStatus(permissionState, pendingCount) {
+  if (!isNeedsAuthorization(permissionState)) {
     return;
   }
 
-  if (permissionState === "prompt") {
-    setStatus(t("reauthorizationRememberedStatus"), true);
-    return;
-  }
+  setStatus(t("obsidianReconnectPendingStatus", [String(pendingCount)]));
+}
 
-  if (permissionState === "denied") {
-    setStatus(t("reauthorizationRequiredStatus"), true);
-    return;
-  }
-
-  if (!silent) {
-    setStatus(t("reauthorizationRequiredStatus"), true);
-  }
+function isNeedsAuthorization(permissionState) {
+  return (
+    permissionState === "missing" ||
+    permissionState === "prompt" ||
+    permissionState === "denied"
+  );
 }
 
 function downloadMarkdown(markdown, filename) {
@@ -469,10 +504,10 @@ function setObsidianState(label) {
   elements.obsidianState.textContent = label;
 }
 
-async function updateObsidianConnection(permissionState) {
+async function updateObsidianConnection(permissionState, syncTabAlive) {
   const directoryName = await getDirectoryNameForState(permissionState);
 
-  setObsidianState(permissionLabel(permissionState));
+  setObsidianState(permissionLabel(permissionState, syncTabAlive));
   setConnectButtonLabel(permissionState);
   setConnectedDirectory(permissionState, directoryName);
   setBusy(isBusy);
@@ -505,9 +540,11 @@ function setStatus(message, isError = false) {
   elements.status.classList.toggle("error", isError);
 }
 
-function permissionLabel(permissionState) {
+function permissionLabel(permissionState, syncTabAlive) {
   if (permissionState === "granted") {
-    return t("obsidianStateConnected");
+    return syncTabAlive
+      ? t("obsidianStateSyncGuardianActive")
+      : t("obsidianStateConnected");
   }
 
   if (permissionState === "prompt") {

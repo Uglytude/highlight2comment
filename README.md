@@ -52,6 +52,24 @@ Chrome revokes folder permission for all extensions on restart and offers extens
 **I never connected a folder. Do I need to care about any of this?**
 No. Highlighting, commenting, and "Download all" work with zero permissions and zero setup.
 
+**How is this different from Glasp, Web Highlights, or Obsidian Web Clipper?**
+Those are all good tools with different goals. highlight2comment keeps private highlighting free forever, has no social feed, no account, and saves plain Markdown locally. If you want the smallest possible flow (select, comment, Enter) and one Markdown file you can hand to any AI, this is that tool.
+
+**Where are my highlights stored?**
+In your browser's local extension storage, and, if you connect a folder, in one Markdown file (`highlight2comment-log.md`) inside that folder, for example your Obsidian vault. There is no server copy.
+
+**Can I use my highlights with ChatGPT, Claude, or other AI tools?**
+Yes, that is the main design goal. Everything lands in one plain Markdown file, and Markdown is the input format AI reads best. Drop the file into any AI chat and ask for summaries, connections, or a review of what you read this week.
+
+**Does it work with Obsidian?**
+Yes. Connect your vault folder once and notes append automatically to a Markdown log inside it. No plugin needed on the Obsidian side.
+
+**Does it work on pages that block copying?**
+Yes. Selecting and saving works even on many pages that disable normal copy and paste.
+
+**Is it really free? What's the catch?**
+Free, open source (MIT), no account, no premium tier. It was built by one person who needed exactly this tool. The code is small enough to read in one sitting.
+
 ## Privacy, honestly
 
 - Notes are stored in your browser's local extension storage and, if you connect one, in the folder you chose. Nothing else.
@@ -101,6 +119,24 @@ Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件
 
 **我不连文件夹,需要管这些吗?**
 不需要。划线、评论、「Download all」导出,零授权零设置,装好就能用。
+
+**它和 Glasp、Web Highlights、Obsidian Web Clipper 有什么不同?**
+它们都是好工具,只是目标不同。highlight2comment 的私密划线永远免费,没有社区信息流、没有账号,笔记以纯 Markdown 存在本地。如果你想要最短的流程(选中、评论、回车)和一份能直接丢给任何 AI 的 Markdown 文件,就是它了。
+
+**我的划线存在哪里?**
+浏览器本地扩展存储里;如果你连接了文件夹,还会写进那个文件夹里的一份 Markdown 文件(`highlight2comment-log.md`),比如你的 Obsidian 库。没有服务器副本。
+
+**划线能喂给 ChatGPT、Claude 这些 AI 吗?**
+能,这正是设计目标。所有笔记落在一份纯 Markdown 文件里,而 Markdown 是 AI 读得最顺的格式。把文件丢进任何 AI 对话,让它总结、找关联、回顾你这周读了什么。
+
+**支持 Obsidian 吗?**
+支持。连接一次你的库文件夹,笔记就自动追加进里面的 Markdown 日志,Obsidian 那边不用装任何插件。
+
+**禁止复制的网页能用吗?**
+能。很多禁用了复制粘贴的页面,选中和保存照样工作。
+
+**真的免费?有什么坑?**
+免费、开源(MIT)、无账号、没有付费版。作者就是因为自己需要这样一个工具才做的。源码小到一次就能读完。
 
 ## 隐私,说实话
 

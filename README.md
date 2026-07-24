@@ -81,6 +81,20 @@ Free, open source (MIT), no account, no premium tier. It was built by one person
 - Chrome (or a Chromium based browser) with Developer mode.
 - That's all. No build step, no dependencies.
 
+## About the author: why "ugly"?
+
+Hi, I'm MiaoMiao (online: SpaceMiao). I'm a painting hobbyist, not a programmer. In January 2026 I started vibe coding, using AI to solve problems in my painting life.
+
+The first app I made is called Uglytude (耐丑力, "tolerance for ugly"). Then I realized Uglytude is not just an app name. It's my philosophy for making things: I used to be a perfectionist. An app had to be perfect before launching, a painting had to be perfect before anyone could see it. Now I set my goal to "make an ugly thing": an ugly extension, an ugly skill, then share it publicly. Making an ugly thing is OK. **Ugly is better than nothing.**
+
+These are all tools I actually use every day. They're ugly and plainly packaged, but each one is a starting point, so the next build never starts from zero.
+
+You're looking at this ugly thing right now. Which means: if I can, you can too.
+
+- 🎨 Like painting? Try my app [Uglytude](https://uglytude.com)
+- 🏠 In Zurich? I'm setting up a little hut for ugly paintings. Address on [the website](https://uglytude.com). Come play.
+- 🔧 Curious how a non-coder builds tools with AI? Follow [@Uglytude](https://github.com/Uglytude)
+
 ---
 
 # highlight2comment(中文)
@@ -142,6 +156,20 @@ Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件
 
 - 笔记只存在浏览器本地和你自己选的文件夹里,没有服务器、没有账号、没有统计,**零网络请求**,源码很小,欢迎自查。
 - 唯一申请的权限是 `storage`;文件夹访问由你通过浏览器自己的弹窗明确授权。
+
+## 关于作者:为什么是「丑东西」
+
+我是妙妙(网名 SpaceMiao),一个画画爱好者,不是程序员。2026 年 1 月我开始接触 Vibe Coding,想用 AI 解决画画里的问题。
+
+我做的第一个 App 叫耐丑力(Uglytude),后来我意识到 Uglytude 不只是个名字,它是我做东西的 philosophy:我以前是完美主义者,App 要完美才敢上架,画要完美才敢给人看。现在我把目标定成「做一个丑东西」:一个丑插件、一个丑 skill,做完就公开分享。做个丑东西,it's OK。**丑比没有好。**
+
+这些都是我自己每天在用的工具。它丑,包装也不好看,但它是一个起点:下次再做什么,就不用从零开始了。
+
+你现在看到了这个丑东西,那就说明:我如果可以,你也可以。
+
+- 🎨 喜欢画画?试试我的 App [Uglytude(耐丑力)](https://uglytude.com)
+- 🏠 在苏黎世?我正在搭一个画丑画的小屋,地址就在[网站](https://uglytude.com)上,欢迎来玩
+- 🔧 想知道一个不会代码的人怎么用 AI 做工具?关注 [@Uglytude](https://github.com/Uglytude)
 
 ---
 

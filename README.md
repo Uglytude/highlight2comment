@@ -85,7 +85,7 @@ Free, open source (MIT), no account, no premium tier. It was built by one person
 
 Hi, I'm MiaoMiao (online: SpaceMiao). I'm a painting hobbyist, not a programmer. In January 2026 I started vibe coding, using AI to solve problems in my painting life.
 
-The first app I made is called Uglytude (耐丑力, "tolerance for ugly"). Then I realized Uglytude is not just an app name. It's my philosophy for making things: I used to be a perfectionist. An app had to be perfect before launching, a painting had to be perfect before anyone could see it. Now I set my goal to "make an ugly thing": an ugly extension, an ugly skill, then share it publicly. Making an ugly thing is OK. **Ugly is better than nothing.**
+The first app I made is called Uglytude. The name is ugly plus attitude: literally "tolerance for ugly" (耐丑力), really a stance: I choose to make ugly things. Then I realized it's not just an app name. It's my philosophy for making things: I used to be a perfectionist. An app had to be perfect before launching, a painting had to be perfect before anyone could see it. Now I set my goal to "make an ugly thing": an ugly extension, an ugly skill, then share it publicly. Making an ugly thing is OK. **Ugly is better than nothing.**
 
 These are all tools I actually use every day. They're ugly and plainly packaged, but each one is a starting point, so the next build never starts from zero.
 
@@ -161,7 +161,7 @@ Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件
 
 我是妙妙(网名 SpaceMiao),一个画画爱好者,不是程序员。2026 年 1 月我开始接触 Vibe Coding,想用 AI 解决画画里的问题。
 
-我做的第一个 App 叫耐丑力(Uglytude),后来我意识到 Uglytude 不只是个名字,它是我做东西的 philosophy:我以前是完美主义者,App 要完美才敢上架,画要完美才敢给人看。现在我把目标定成「做一个丑东西」:一个丑插件、一个丑 skill,做完就公开分享。做个丑东西,it's OK。**丑比没有好。**
+我做的第一个 App 叫 Uglytude(耐丑力)。这个名字是 ugly 加 attitude:字面是「耐得住丑」,其实是一种态度:我就要做丑东西。后来我意识到,这不只是一个 App 的名字,它是我做东西的 philosophy:我以前是完美主义者,App 要完美才敢上架,画要完美才敢给人看。现在我把目标定成「做一个丑东西」:一个丑插件、一个丑 skill,做完就公开分享。做个丑东西,it's OK。**丑比没有好。**
 
 这些都是我自己每天在用的工具。它丑,包装也不好看,但它是一个起点:下次再做什么,就不用从零开始了。
 

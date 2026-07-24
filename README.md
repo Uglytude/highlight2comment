@@ -91,7 +91,7 @@ These are all tools I actually use every day. They're ugly and plainly packaged,
 
 You're looking at this ugly thing right now. Which means: if I can, you can too.
 
-- 🎨 Like painting? Try my app [Uglytude](https://uglytude.com)
+- 🎨 Like painting? Try my app [Uglytude](https://apps.apple.com/us/app/uglytude/id6759151455)
 - 🏠 In Zurich? I'm setting up a little hut for ugly paintings. Address on [the website](https://uglytude.com). Come play.
 - 🔧 Curious how a non-coder builds tools with AI? Follow [@Uglytude](https://github.com/Uglytude)
 
@@ -167,7 +167,7 @@ Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件
 
 你现在看到了这个丑东西,那就说明:我如果可以,你也可以。
 
-- 🎨 喜欢画画?试试我的 App [Uglytude(耐丑力)](https://uglytude.com)
+- 🎨 喜欢画画?试试我的 App [Uglytude(耐丑力)](https://apps.apple.com/us/app/uglytude/id6759151455)
 - 🏠 在苏黎世?我正在搭一个画丑画的小屋,地址就在[网站](https://uglytude.com)上,欢迎来玩
 - 🔧 想知道一个不会代码的人怎么用 AI 做工具?关注 [@Uglytude](https://github.com/Uglytude)
 

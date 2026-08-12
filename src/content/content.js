@@ -5,6 +5,7 @@
   const SAVED_FLASH_MESSAGE = getMessage("savedFlash");
   const DUPLICATE_FLASH_MESSAGE = getMessage("duplicateFlash");
   const WIDGET_CLASS = "h2c-root";
+  const RESCUE_CLASS = "h2c-selection-rescue";
   const ACTION_BUTTON_SIZE = 26;
   const ACTION_BAR_PADDING = 3;
   const ACTION_BAR_GAP = 2;
@@ -39,6 +40,7 @@
     </svg>
   `;
 
+  let selectionHealthChecked = false;
   let buttonRoot = null;
   let editorRoot = null;
   let outsideEditorTimer = null;
@@ -105,6 +107,8 @@
       return;
     }
 
+    checkSelectionHealth(selection);
+
     const rect = getSelectionRect(selection);
     const buttonRect = getSelectionEndRect(selection);
 
@@ -122,6 +126,36 @@
     }
 
     showButton(buttonRect);
+  }
+
+  function checkSelectionHealth(selection) {
+    if (selectionHealthChecked) {
+      return;
+    }
+
+    selectionHealthChecked = true;
+
+    try {
+      const anchorNode = selection.anchorNode;
+      const element =
+        anchorNode && anchorNode.nodeType === Node.TEXT_NODE
+          ? anchorNode.parentElement
+          : anchorNode;
+
+      if (!element) {
+        return;
+      }
+
+      const style = getComputedStyle(element, "::selection");
+      const backgroundColor = style.backgroundColor;
+      const color = style.color;
+      const hasOpaqueBackground =
+        backgroundColor !== "rgba(0, 0, 0, 0)" && backgroundColor !== "transparent";
+
+      if (hasOpaqueBackground && backgroundColor === color) {
+        document.documentElement.classList.add(RESCUE_CLASS);
+      }
+    } catch {}
   }
 
   function showButton(rect) {

@@ -101,6 +101,18 @@
     "message": "Got it",
     "description": "Button that permanently dismisses the one-time guardian tab education card."
   },
+  "conflictHintMessage": {
+    "message": "Some saved notes are missing from your log file. This can happen after a two-device sync conflict, or if you deleted them on purpose.",
+    "description": "Popup warning shown when locally saved notes are missing from the connected log file."
+  },
+  "conflictRewriteButton": {
+    "message": "Write them back",
+    "description": "Button that marks missing notes as pending and writes them back to the log file."
+  },
+  "conflictIgnoreButton": {
+    "message": "Dismiss (I deleted them)",
+    "description": "Button that ignores notes intentionally deleted from the log file."
+  },
   "restoringAutoSyncStatus": {
     "message": "Restoring auto-sync…",
     "description": "Popup status shown while permission, the guardian tab, and pending sync are restored."

@@ -1,11 +1,15 @@
 import { log } from "../lib/logger.js";
 import { refreshBadge } from "../lib/badge.js";
 import {
+  addIgnoredNoteIds,
   deleteNote,
   findRecentDuplicate,
+  getMissingNoteIds,
   getPendingNotes,
   markNotesWritten,
   saveNote,
+  setMissingNoteIds,
+  unmarkNotesWritten,
 } from "../lib/storage.js";
 import { getMessage as t } from "../lib/i18n.js";
 
@@ -16,6 +20,8 @@ const WRITE_MESSAGE = "H2C_WRITE";
 const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
 const GET_SYNC_TAB_STATE_MESSAGE = "H2C_GET_SYNC_TAB_STATE";
 const RESTORE_SYNC_TAB_MESSAGE = "H2C_RESTORE_SYNC_TAB";
+const REWRITE_MISSING_NOTES_MESSAGE = "H2C_REWRITE_MISSING_NOTES";
+const IGNORE_MISSING_NOTES_MESSAGE = "H2C_IGNORE_MISSING_NOTES";
 const SERVICE_WORKER_TARGET = "service-worker";
 const SYNC_TAB_TARGET = "sync-tab";
 const OFFSCREEN_TARGET = "offscreen";
@@ -71,6 +77,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (isGetSyncTabStateMessage(message)) {
     getSyncTabState().then(sendResponse);
+    return true;
+  }
+
+  if (isRewriteMissingNotesMessage(message)) {
+    handleRewriteMissingNotes().then(sendResponse);
+    return true;
+  }
+
+  if (isIgnoreMissingNotesMessage(message)) {
+    handleIgnoreMissingNotes().then(sendResponse);
     return true;
   }
 
@@ -247,6 +263,31 @@ async function handleRestoreSyncTabMessage() {
       alive: false,
       error: getErrorMessage(error),
     };
+  }
+}
+
+async function handleRewriteMissingNotes() {
+  try {
+    const missingIds = await getMissingNoteIds();
+
+    await unmarkNotesWritten(missingIds);
+    await setMissingNoteIds([]);
+    await requestSync("popup_rewrite_missing_notes");
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: getErrorMessage(error) };
+  }
+}
+
+async function handleIgnoreMissingNotes() {
+  try {
+    const missingIds = await getMissingNoteIds();
+
+    await addIgnoredNoteIds(missingIds);
+    await setMissingNoteIds([]);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: getErrorMessage(error) };
   }
 }
 
@@ -718,6 +759,22 @@ function isGetSyncTabStateMessage(message) {
   return (
     message &&
     message.type === GET_SYNC_TAB_STATE_MESSAGE &&
+    message.target === SERVICE_WORKER_TARGET
+  );
+}
+
+function isRewriteMissingNotesMessage(message) {
+  return (
+    message &&
+    message.type === REWRITE_MISSING_NOTES_MESSAGE &&
+    message.target === SERVICE_WORKER_TARGET
+  );
+}
+
+function isIgnoreMissingNotesMessage(message) {
+  return (
+    message &&
+    message.type === IGNORE_MISSING_NOTES_MESSAGE &&
     message.target === SERVICE_WORKER_TARGET
   );
 }

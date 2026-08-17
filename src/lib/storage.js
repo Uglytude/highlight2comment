@@ -2,6 +2,9 @@ import { getMessage as t } from "./i18n.js";
 
 export const NOTES_KEY = "h2c_notes";
 export const WRITTEN_NOTE_IDS_KEY = "h2c_written_note_ids";
+export const LOG_SNAPSHOTS_KEY = "h2c_log_snapshots";
+export const IGNORED_NOTE_IDS_KEY = "h2c_ignored_note_ids";
+export const MISSING_NOTE_IDS_KEY = "h2c_missing_note_ids";
 
 export async function saveNote(note) {
   const cleanNote = normalizeNote(note);
@@ -64,6 +67,57 @@ export async function markNotesWritten(noteIds) {
 
   await chrome.storage.local.set({
     [WRITTEN_NOTE_IDS_KEY]: Array.from(nextIds),
+  });
+}
+
+export async function saveLogSnapshot(text) {
+  const data = await chrome.storage.local.get({ [LOG_SNAPSHOTS_KEY]: [] });
+  const snapshots = Array.isArray(data[LOG_SNAPSHOTS_KEY])
+    ? data[LOG_SNAPSHOTS_KEY]
+    : [];
+  const nextSnapshots = [{ ts: Date.now(), text }, ...snapshots].slice(0, 2);
+
+  await chrome.storage.local.set({ [LOG_SNAPSHOTS_KEY]: nextSnapshots });
+}
+
+export async function getIgnoredNoteIds() {
+  const data = await chrome.storage.local.get({ [IGNORED_NOTE_IDS_KEY]: [] });
+  const ids = data[IGNORED_NOTE_IDS_KEY];
+  return Array.isArray(ids) ? Array.from(new Set(ids)) : [];
+}
+
+export async function addIgnoredNoteIds(noteIds) {
+  const currentIds = await getIgnoredNoteIds();
+  const nextIds = new Set(currentIds);
+
+  for (const noteId of noteIds) {
+    nextIds.add(noteId);
+  }
+
+  await chrome.storage.local.set({
+    [IGNORED_NOTE_IDS_KEY]: Array.from(nextIds),
+  });
+}
+
+export async function getMissingNoteIds() {
+  const data = await chrome.storage.local.get({ [MISSING_NOTE_IDS_KEY]: [] });
+  const ids = data[MISSING_NOTE_IDS_KEY];
+  return Array.isArray(ids) ? Array.from(new Set(ids)) : [];
+}
+
+export async function setMissingNoteIds(noteIds) {
+  await chrome.storage.local.set({
+    [MISSING_NOTE_IDS_KEY]: Array.from(new Set(noteIds)),
+  });
+}
+
+export async function unmarkNotesWritten(noteIds) {
+  const currentIds = await getWrittenNoteIds();
+  const idsToRemove = new Set(noteIds);
+  const nextIds = currentIds.filter((noteId) => !idsToRemove.has(noteId));
+
+  await chrome.storage.local.set({
+    [WRITTEN_NOTE_IDS_KEY]: Array.from(new Set(nextIds)),
   });
 }
 

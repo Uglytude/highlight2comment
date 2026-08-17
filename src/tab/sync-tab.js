@@ -1,7 +1,7 @@
 import { refreshBadge } from "../lib/badge.js";
 import { getMessage as t } from "../lib/i18n.js";
 import { log } from "../lib/logger.js";
-import { mergeNotesIntoLog } from "../lib/markdown.js";
+import { extractNoteIds, mergeNotesIntoLog } from "../lib/markdown.js";
 import {
   authorizeDirectory,
   getDirectoryPermissionState,
@@ -10,9 +10,14 @@ import {
   writeLogText,
 } from "../lib/obsidian-writer.js";
 import {
+  getIgnoredNoteIds,
+  getNotes,
   getPendingNotes,
+  getWrittenNoteIds,
   markNotesWritten,
   NOTES_KEY,
+  saveLogSnapshot,
+  setMissingNoteIds,
   WRITTEN_NOTE_IDS_KEY,
 } from "../lib/storage.js";
 
@@ -113,6 +118,20 @@ async function writePendingNotes(renderOptions) {
 
 async function appendPendingNotes(pendingNotes, renderOptions) {
   const existingMarkdown = await readLogText();
+
+  try {
+    await saveLogSnapshot(existingMarkdown);
+    const fileIds = extractNoteIds(existingMarkdown);
+    const writtenIds = await getWrittenNoteIds();
+    const ignoredIds = new Set(await getIgnoredNoteIds());
+    const allNotes = await getNotes();
+    const existingNoteIds = new Set(allNotes.map((note) => note.id));
+    const missingIds = writtenIds.filter(
+      (id) => !fileIds.has(id) && !ignoredIds.has(id) && existingNoteIds.has(id),
+    );
+    await setMissingNoteIds(missingIds);
+  } catch {}
+
   const fullMarkdown = mergeNotesIntoLog(
     pendingNotes,
     existingMarkdown,

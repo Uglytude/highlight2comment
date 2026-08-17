@@ -230,6 +230,20 @@ h1 {
   padding: 0 10px;
 }
 
+#conflict-hint .actions {
+  margin-top: 9px;
+}
+
+#conflict-rewrite-button,
+#conflict-ignore-button {
+  background: #ffffff;
+  border: 1px solid #c7c9cc;
+  color: #202124;
+  font-size: 12px;
+  height: 30px;
+  padding: 0 10px;
+}
+
 .actions {
   display: grid;
   gap: 8px;

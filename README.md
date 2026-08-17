@@ -70,6 +70,9 @@ Yes. Selecting and saving works even on many pages that disable normal copy and 
 **Is it really free? What's the catch?**
 Free, open source (MIT), no account, no premium tier. It was built by one person who needed exactly this tool. The code is small enough to read in one sitting.
 
+**Can I use it on two computers with the same vault (multiple devices)?**
+Yes. Each computer keeps its own local notes, and both append into the same Markdown log; entries merge and numbering continues, nothing gets overwritten by design. Three habits keep it safe: don't write from both computers at the same moment, let iCloud/your sync finish before switching machines, and connect the folder once on each computer. Since v1.3.0 the extension also checks the log on every sync: if saved notes ever go missing after a sync conflict, the popup offers a one-click "Write them back".
+
 ## Privacy, honestly
 
 - Notes are stored in your browser's local extension storage and, if you connect one, in the folder you chose. Nothing else.
@@ -188,6 +191,9 @@ Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件
 
 **真的免费?有什么坑?**
 免费、开源(MIT)、无账号、没有付费版。作者就是因为自己需要这样一个工具才做的。源码小到一次就能读完。
+
+**两台电脑用同一个笔记库(多设备)可以吗?**
+可以。每台电脑各存各的本地笔记,写入同一份 Markdown 日志时是合并追加:条目保留、编号接着数,设计上不会互相覆盖。三个习惯保平安:两台电脑别同时写、换电脑前等 iCloud 或你的同步工具搬完、每台电脑各自连一次文件夹。v1.3.0 起插件每次同步还会自动点名:万一同步冲突弄丢了已存笔记,面板会提示并提供一键「补写回文件」。
 
 ## 隐私,说实话
 

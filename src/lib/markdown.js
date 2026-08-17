@@ -314,3 +314,13 @@ function normalizeRenderOptions(options = {}) {
     unknownSourceLabel: String(options.unknownSourceLabel || DEFAULT_UNKNOWN_SOURCE_LABEL),
   };
 }
+
+export function extractNoteIds(markdown) {
+  const noteIds = new Set();
+
+  for (const match of String(markdown || "").matchAll(/^\[\^([a-z0-9-]+)\]:/gm)) {
+    noteIds.add(match[1]);
+  }
+
+  return noteIds;
+}

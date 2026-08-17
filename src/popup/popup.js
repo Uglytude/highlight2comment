@@ -2,6 +2,7 @@ import { getDateKey, renderNotes } from "../lib/markdown.js";
 import { log } from "../lib/logger.js";
 import { getMessage as t } from "../lib/i18n.js";
 import {
+  getMissingNoteIds,
   getNoteCount,
   getNotes,
   getPendingNotes,
@@ -22,6 +23,8 @@ const DELETE_NOTE_MESSAGE = "H2C_DELETE_NOTE";
 const ENSURE_SYNC_TAB_MESSAGE = "H2C_ENSURE_SYNC_TAB";
 const GET_SYNC_TAB_STATE_MESSAGE = "H2C_GET_SYNC_TAB_STATE";
 const RESTORE_SYNC_TAB_MESSAGE = "H2C_RESTORE_SYNC_TAB";
+const REWRITE_MISSING_NOTES_MESSAGE = "H2C_REWRITE_MISSING_NOTES";
+const IGNORE_MISSING_NOTES_MESSAGE = "H2C_IGNORE_MISSING_NOTES";
 const SERVICE_WORKER_TARGET = "service-worker";
 const GUARDIAN_HINT_DISMISSED_KEY = "h2c_guardian_hint_dismissed";
 const NOTE_PREVIEW_LIMIT = 90;
@@ -63,6 +66,9 @@ function bindElements() {
   elements.obsidianState = document.getElementById("obsidian-state");
   elements.guardianHint = document.getElementById("guardian-hint");
   elements.guardianHintDismiss = document.getElementById("guardian-hint-dismiss");
+  elements.conflictHint = document.getElementById("conflict-hint");
+  elements.conflictRewriteButton = document.getElementById("conflict-rewrite-button");
+  elements.conflictIgnoreButton = document.getElementById("conflict-ignore-button");
   elements.connectButton = document.getElementById("connect-button");
   elements.downloadButton = document.getElementById("download-button");
   elements.status = document.getElementById("status");
@@ -94,6 +100,8 @@ function bindEvents() {
   elements.notesPanelClose.addEventListener("click", closeNotesPanel);
   elements.connectButton.addEventListener("click", handleConnectClick);
   elements.guardianHintDismiss.addEventListener("click", handleGuardianHintDismiss);
+  elements.conflictRewriteButton.addEventListener("click", handleConflictRewriteClick);
+  elements.conflictIgnoreButton.addEventListener("click", handleConflictIgnoreClick);
   elements.downloadButton.addEventListener("click", handleDownloadClick);
   elements.reauthorizeLink.addEventListener("click", handleReauthorizeClick);
   document.addEventListener("click", resetDeleteConfirmation);
@@ -329,18 +337,20 @@ function padTime(value) {
 }
 
 async function refreshSummary(showQuietStatus = false) {
-  const [count, pendingNotes, permissionState, syncTabState, hintState] =
+  const [count, pendingNotes, permissionState, syncTabState, hintState, missingIds] =
     await Promise.all([
       getNoteCount(),
       getPendingNotes(),
       getDirectoryPermissionState(),
       getSyncTabState(),
       chrome.storage.local.get({ [GUARDIAN_HINT_DISMISSED_KEY]: false }),
+      getMissingNoteIds(),
     ]);
 
   elements.noteCount.textContent = String(count);
   await updateObsidianConnection(permissionState, syncTabState);
   updateGuardianHint(permissionState, syncTabState, hintState);
+  elements.conflictHint.hidden = missingIds.length === 0;
 
   if (showQuietStatus) {
     showQuietReconnectStatus(permissionState, pendingNotes.length);
@@ -374,6 +384,41 @@ async function handleGuardianHintDismiss() {
     await log("guardian_hint_dismiss_failed", {
       message: getErrorMessage(error),
     });
+    setStatus(getErrorMessage(error), true);
+  }
+}
+
+async function handleConflictRewriteClick() {
+  try {
+    const result = await sendServiceWorkerMessage({
+      type: REWRITE_MISSING_NOTES_MESSAGE,
+      target: SERVICE_WORKER_TARGET,
+    });
+
+    if (!result || !result.ok) {
+      throw new Error(result?.error || "unknownErrorStatus");
+    }
+
+    elements.conflictHint.hidden = true;
+    await refreshSummary(true);
+  } catch (error) {
+    setStatus(getErrorMessage(error), true);
+  }
+}
+
+async function handleConflictIgnoreClick() {
+  try {
+    const result = await sendServiceWorkerMessage({
+      type: IGNORE_MISSING_NOTES_MESSAGE,
+      target: SERVICE_WORKER_TARGET,
+    });
+
+    if (!result || !result.ok) {
+      throw new Error(result?.error || "unknownErrorStatus");
+    }
+
+    elements.conflictHint.hidden = true;
+  } catch (error) {
     setStatus(getErrorMessage(error), true);
   }
 }

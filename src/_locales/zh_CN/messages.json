@@ -101,6 +101,18 @@
     "message": "知道了",
     "description": "Button that permanently dismisses the one-time guardian tab education card."
   },
+  "conflictHintMessage": {
+    "message": "有几条已保存的笔记不在 log 文件里。可能是两台电脑同步冲突，也可能是你自己删的。",
+    "description": "Popup warning shown when locally saved notes are missing from the connected log file."
+  },
+  "conflictRewriteButton": {
+    "message": "补写回文件",
+    "description": "Button that marks missing notes as pending and writes them back to the log file."
+  },
+  "conflictIgnoreButton": {
+    "message": "忽略（是我删的）",
+    "description": "Button that ignores notes intentionally deleted from the log file."
+  },
   "restoringAutoSyncStatus": {
     "message": "正在恢复自动同步…",
     "description": "Popup status shown while permission, the guardian tab, and pending sync are restored."

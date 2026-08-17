@@ -1,6 +1,6 @@
 # highlight2comment
 
-A tiny Chrome extension for people who read long articles and want to keep the good sentences.
+A tiny Chrome extension for people who read long articles and want to keep the good sentences. Built for the AI era: every highlight lands in one plain Markdown file you can hand straight to ChatGPT, Claude, or any AI. No organizing needed.
 
 Select a sentence on any page, add a one line comment (or skip it), and everything lands in a clean Markdown log on your own computer. Numbered entries, sources tucked away as footnotes, one file that grows day by day.
 
@@ -51,6 +51,9 @@ Chrome revokes folder permission for all extensions on restart and offers extens
 
 **I never connected a folder. Do I need to care about any of this?**
 No. Highlighting, commenting, and "Download all" work with zero permissions and zero setup.
+
+**How is this different from a traditional highlighter?**
+Traditional highlighters assume you will come back later to organize: tags, colors, folders, exports. highlight2comment assumes your next reader is an AI. Everything lands in one plain Markdown log that ChatGPT, Claude, or any AI can read as-is, so there is nothing to tidy up. Highlight, comment, done.
 
 **How is this different from Glasp, Web Highlights, or Obsidian Web Clipper?**
 Those are all good tools with different goals. highlight2comment keeps private highlighting free forever, has no social feed, no account, and saves plain Markdown locally. If you want the smallest possible flow (select, comment, Enter) and one Markdown file you can hand to any AI, this is that tool.
@@ -139,7 +142,7 @@ It's exactly because someone this bad at it could still pull it off that you get
 
 # highlight2comment(中文)
 
-一个极简 Chrome 扩展,给读长文章、想留住好句子的人。
+一个极简 Chrome 扩展,给读长文章、想留住好句子的人。为 AI 时代而生:所有划线落进同一份纯 Markdown 文件,直接丢给 ChatGPT、Claude 或任何 AI,不用整理。
 
 在任意网页选中一句话,写一句评论(不写也行),一切都会存成你自己电脑上的一份干净 Markdown 日志:条目带编号,来源收进脚注,一个文件按天累积。
 
@@ -173,6 +176,9 @@ Chrome 重启时会收回所有插件的文件夹授权,而且暂时不给插件
 
 **我不连文件夹,需要管这些吗?**
 不需要。划线、评论、「Download all」导出,零授权零设置,装好就能用。
+
+**它和传统划线工具有什么本质不同?**
+传统划线工具默认你以后会回来整理:打标签、分颜色、归文件夹、导出。highlight2comment 默认你的下一个读者是 AI:所有划线落在一份纯 Markdown 日志里,ChatGPT、Claude 或任何 AI 拿来就能读,根本没有「整理」这一步。划线,评论,闭环。
 
 **它和 Glasp、Web Highlights、Obsidian Web Clipper 有什么不同?**
 它们都是好工具,只是目标不同。highlight2comment 的私密划线永远免费,没有社区信息流、没有账号,笔记以纯 Markdown 存在本地。如果你想要最短的流程(选中、评论、回车)和一份能直接丢给任何 AI 的 Markdown 文件,就是它了。
